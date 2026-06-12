@@ -1,438 +1,327 @@
-     1|<!DOCTYPE html>
-     2|<html lang="zh-CN">
-     3|<head>
-     4|<meta charset="UTF-8">
-     5|<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-     6|<title>Ozon 深度分析報表</title>
-     7|<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-     8|<style>
-     9|*{margin:0;padding:0;box-sizing:border-box}
-    10|body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f13;color:#e0e0e0;padding:16px}
-    11|.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
-    12|.header h1{font-size:20px;font-weight:600;color:#fff}
-    13|.header h1 span{color:#6c8cff}
-    14|.back-btn{background:#1a1a24;border:1px solid #2a2a3a;border-radius:8px;padding:8px 16px;color:#aaa;text-decoration:none;font-size:13px;transition:all .2s}
-    15|.back-btn:hover{background:#2a2a3a;color:#fff}
-    16|.tabs{display:flex;gap:4px;margin-bottom:16px;background:#1a1a24;border-radius:10px;padding:4px;overflow-x:auto}
-    17|.tab-btn{padding:8px 16px;font-size:13px;cursor:pointer;border:none;background:transparent;color:#666;border-radius:8px;white-space:nowrap;transition:all .2s;flex-shrink:0}
-    18|.tab-btn.active{background:#6c8cff;color:#fff}
-    19|.tab-btn:hover:not(.active){color:#aaa}
-    20|.tab-content{display:none}
-    21|.tab-content.active{display:block}
-    22|.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:16px}
-    23|.stat-card{background:#1a1a24;border-radius:10px;padding:12px;border:1px solid #2a2a3a}
-    24|.stat-card .label{font-size:11px;color:#888;margin-bottom:2px}
-    25|.stat-card .value{font-size:18px;font-weight:600;color:#fff}
-    26|.stat-card .sub{font-size:11px;color:#666;margin-top:2px}
-    27|.stat-card .chg-up{color:#51cf66}
-    28|.stat-card .chg-down{color:#ff6b6b}
-    29|.chart-card{background:#1a1a24;border-radius:10px;padding:12px;border:1px solid #2a2a3a;margin-bottom:12px}
-    30|.chart-card h3{font-size:13px;color:#aaa;margin-bottom:8px;font-weight:500}
-    31|.chart-card canvas{max-height:260px;height:260px;width:100%!important}
-    32|.chart-card p{font-size:12px;color:#888;line-height:1.6;padding:4px 0}
-    33|.chart-card .highlight{color:#6c8cff;font-weight:600}
-    34|.chart-card .danger{color:#ff6b6b;font-weight:600}
-    35|.chart-card .success{color:#51cf66;font-weight:600}
-    36|.data-table{width:100%;border-collapse:collapse;font-size:12px}
-    37|.data-table th{background:#14141e;color:#888;font-weight:500;padding:7px 8px;text-align:left;white-space:nowrap}
-    38|.data-table td{padding:6px 8px;border-top:1px solid #22222e}
-    39|.data-table tr:hover td{background:#1e1e2c}
-    40|.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-    41|.filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-end}
-    42|.filter-group{display:flex;flex-direction:column;gap:4px}
-    43|.filter-group label{font-size:11px;color:#888;font-weight:500}
-    44|.filter-group select,.filter-group input{background:#1a1a24;border:1px solid #2a2a3a;border-radius:8px;padding:6px 10px;color:#e0e0e0;font-size:13px;min-width:100px;outline:none}
-    45|.filter-group select:focus{border-color:#6c8cff}
-    46|.insight-box{background:linear-gradient(135deg,#1a1a24,#1a1a30);border:1px solid #2a2a3a;border-radius:10px;padding:12px;margin-bottom:12px}
-    47|.insight-box h4{font-size:13px;color:#6c8cff;margin-bottom:6px}
-    48|.insight-box p{font-size:12px;color:#aaa;line-height:1.7}
-    49|@media(max-width:768px){body{padding:10px}.header h1{font-size:17px}.tab-btn{padding:6px 12px;font-size:12px}.stats-row{grid-template-columns:repeat(3,1fr);gap:6px}.stat-card{padding:8px}.stat-card .value{font-size:15px}.chart-card canvas{max-height:200px;height:200px}}
-    50|@media(max-width:480px){.stats-row{grid-template-columns:repeat(2,1fr)}}
-    51|</style>
-    52|</head>
-    53|<body>
-    54|
-    55|<div class="header">
-    56|  <h1>📊 <span>Ozon</span> 深度分析報表</h1>
-    57|  <a href="https://rrnnpmdr.github.io/ozon-dashboard/" class="back-btn">← 返回儀表板</a>
-    58|</div>
-    59|
-    60|<div class="tabs">
-    61|  <button class="tab-btn active" data-tab="overview">📋 總覽</button>
-    62|  <button class="tab-btn" data-tab="brands">🏷️ 品牌明細</button>
-    63|  <button class="tab-btn" data-tab="skus">📦 SKU 診斷</button>
-    64|  <button class="tab-btn" data-tab="growth">📈 增長分析</button>
-    65|</div>
-    66|
-    67|<div class="tab-content active" id="tab-overview"></div>
-    68|<div class="tab-content" id="tab-brands"></div>
-    69|<div class="tab-content" id="tab-skus"></div>
-    70|<div class="tab-content" id="tab-growth"></div>
-    71|
-    72|<script>
-    73|// ── Embedded Data (2026 Feb - Jun 11) ──
-    74|const BRANDS = [{"brand": "FANCL", "feb": 2489479.5, "mar": 3315999.22, "apr": 3183771.74, "may": 2792635.55, "jun": 1294151.18, "total": 13076037.18, "units": 4715, "skus": 39, "aov": 2773.28, "cart_rate": 0.5, "conv": 0.134}, {"brand": "CENTRUM", "feb": 720640.27, "mar": 825086.3, "apr": 589550.88, "may": 445653.55, "jun": 196560.56, "total": 2777491.55, "units": 1324, "skus": 21, "aov": 2097.8, "cart_rate": 0.4, "conv": 0.124}, {"brand": "Lacto-fit", "feb": 79098.43, "mar": 150191.91, "apr": 181740.47, "may": 222819.71, "jun": 76030.9, "total": 709881.42, "units": 366, "skus": 8, "aov": 1939.57, "cart_rate": 0.7, "conv": 0.098}, {"brand": "Asahi", "feb": 15565.04, "mar": 22243.68, "apr": 57081.61, "may": 101945.11, "jun": 45572.16, "total": 242407.6, "units": 77, "skus": 14, "aov": 3148.15, "cart_rate": 0.5, "conv": 0.083}, {"brand": "Earth", "feb": 0.0, "mar": 0.0, "apr": 23882.16, "may": 55464.47, "jun": 71914.88, "total": 151261.51, "units": 79, "skus": 10, "aov": 1914.7, "cart_rate": 0.8, "conv": 0.17}, {"brand": "DHC", "feb": 25315.54, "mar": 32311.35, "apr": 18756.23, "may": 20598.01, "jun": 13651.45, "total": 110632.58, "units": 115, "skus": 9, "aov": 962.02, "cart_rate": 0.6, "conv": 0.097}, {"brand": "Kobayashi", "feb": 20613.12, "mar": 28722.43, "apr": 16328.86, "may": 27006.92, "jun": 2860.93, "total": 95532.25, "units": 24, "skus": 2, "aov": 3980.51, "cart_rate": 0.8, "conv": 0.099}, {"brand": "foodology", "feb": 0.0, "mar": 0.0, "apr": 15032.69, "may": 54726.75, "jun": 19077.53, "total": 88836.97, "units": 53, "skus": 4, "aov": 1676.17, "cart_rate": 0.3, "conv": 0.042}, {"brand": "KissMe", "feb": 7725.84, "mar": 8098.09, "apr": 5547.07, "may": 3025.84, "jun": 1512.18, "total": 25909.02, "units": 33, "skus": 1, "aov": 785.12, "cart_rate": 0.7, "conv": 0.082}, {"brand": "Ettusais", "feb": 3072.15, "mar": 1248.55, "apr": 2445.13, "may": 4181.72, "jun": 1799.7, "total": 12747.25, "units": 21, "skus": 1, "aov": 607.01, "cart_rate": 0.4, "conv": 0.032}, {"brand": "Caltrate", "feb": 0.0, "mar": 4361.61, "apr": 4204.39, "may": 0.0, "jun": 2862.18, "total": 11428.17, "units": 6, "skus": 3, "aov": 1904.7, "cart_rate": 0.3, "conv": 0.085}, {"brand": "Move Free", "feb": 0.0, "mar": 0.0, "apr": 4609.61, "may": 5018.8, "jun": 0.0, "total": 9628.41, "units": 2, "skus": 2, "aov": 4814.2, "cart_rate": 0.6, "conv": 0.104}, {"brand": "Puritan's Pride", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 3645.67, "jun": 2770.45, "total": 6416.11, "units": 2, "skus": 5, "aov": 3208.06, "cart_rate": 0.2, "conv": 0.053}, {"brand": "Jamieson", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 2514.32, "jun": 3424.8, "total": 5939.12, "units": 2, "skus": 7, "aov": 2969.56, "cart_rate": 0.1, "conv": 0.034}, {"brand": "Vlyco", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 3541.97, "jun": 0.0, "total": 3541.97, "units": 2, "skus": 3, "aov": 1770.99, "cart_rate": 0.1, "conv": 0.011}, {"brand": "Нет бренда", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 3203.28, "jun": 0.0, "total": 3203.28, "units": 1, "skus": 1, "aov": 3203.28, "cart_rate": 0.2, "conv": 0.072}, {"brand": "Kate", "feb": 1231.21, "mar": 0.0, "apr": 1909.97, "may": 0.0, "jun": 0.0, "total": 3141.17, "units": 5, "skus": 2, "aov": 628.23, "cart_rate": 0.1, "conv": 0.021}, {"brand": "L'il Critters", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 3076.14, "jun": 0.0, "total": 3076.14, "units": 1, "skus": 1, "aov": 3076.14, "cart_rate": 0.4, "conv": 0.107}, {"brand": "Kerastase", "feb": 0.0, "mar": 0.0, "apr": 2958.11, "may": 0.0, "jun": 0.0, "total": 2958.11, "units": 1, "skus": 4, "aov": 2958.11, "cart_rate": 0.3, "conv": 0.006}, {"brand": "Swisse", "feb": 0.0, "mar": 0.0, "apr": 2940.42, "may": 0.0, "jun": 0.0, "total": 2940.42, "units": 1, "skus": 1, "aov": 2940.42, "cart_rate": 0.4, "conv": 0.089}, {"brand": "Stada", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 2934.05, "total": 2934.05, "units": 1, "skus": 2, "aov": 2934.05, "cart_rate": 0.5, "conv": 0.03}, {"brand": "3ce", "feb": 0.0, "mar": 0.0, "apr": 1459.36, "may": 0.0, "jun": 0.0, "total": 1459.36, "units": 1, "skus": 22, "aov": 1459.36, "cart_rate": 0.1, "conv": 0.003}, {"brand": "vitafusion", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 0.0, "total": 0.0, "units": 0, "skus": 1, "aov": null, "cart_rate": 0.0, "conv": 0.0}, {"brand": "YUHADA", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 0.0, "total": 0.0, "units": 0, "skus": 2, "aov": null, "cart_rate": 0.0, "conv": 0.0}, {"brand": "OLLY", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 0.0, "total": 0.0, "units": 0, "skus": 1, "aov": null, "cart_rate": 0.2, "conv": 0.0}, {"brand": "Kaminomoto", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 0.0, "total": 0.0, "units": 0, "skus": 1, "aov": null, "cart_rate": 0.4, "conv": 0.0}, {"brand": "Gucci", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 0.0, "total": 0.0, "units": 0, "skus": 6, "aov": null, "cart_rate": 0.1, "conv": 0.0}, {"brand": "Florasis", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 0.0, "total": 0.0, "units": 0, "skus": 12, "aov": null, "cart_rate": 0.3, "conv": 0.0}, {"brand": "BANDAI SPIRITS", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 0.0, "total": 0.0, "units": 0, "skus": 1, "aov": null, "cart_rate": 0.0, "conv": 0.0}];
-    75|const TOP_SKUS = [{"offer_id": "Fancl women 40+", "brand": "FANCL", "apr": 563240.46, "may": 272699.7, "jun": 121856.75, "total": 1892432.38, "units": 628}, {"offer_id": "Fancl women 50+", "brand": "FANCL", "apr": 429709.51, "may": 120451.69, "jun": 91277.58, "total": 1520791.35, "units": 478}, {"offer_id": "Fancl women 60+", "brand": "FANCL", "apr": 385671.18, "may": 0.0, "jun": 56455.63, "total": 1323583.72, "units": 379}, {"offer_id": "Fancl women 30+", "brand": "FANCL", "apr": 230786.3, "may": 149546.82, "jun": 31299.7, "total": 1000901.55, "units": 521}, {"offer_id": "Fancl Men 50+", "brand": "FANCL", "apr": 258878.0, "may": 182172.73, "jun": 96266.31, "total": 974461.04, "units": 310}, {"offer_id": "Fancl Men 40+", "brand": "FANCL", "apr": 214936.84, "may": 232230.41, "jun": 101868.27, "total": 822372.2, "units": 269}, {"offer_id": "Fancl Men 30+", "brand": "FANCL", "apr": 164138.53, "may": 148473.08, "jun": 60468.8, "total": 759611.07, "units": 408}, {"offer_id": "FANCL-Women-50-Plus-90", "brand": "FANCL", "apr": 62981.41, "may": 365987.65, "jun": 134100.67, "total": 727655.14, "units": 81}, {"offer_id": "Fancl Men 60+", "brand": "FANCL", "apr": 144426.82, "may": 183674.16, "jun": 36388.18, "total": 637427.45, "units": 187}, {"offer_id": "FANCL-Women-40-Plus-90", "brand": "FANCL", "apr": 92606.24, "may": 329012.16, "jun": 108313.08, "total": 624737.94, "units": 74}, {"offer_id": "FANCL-Women-60-Plus-90", "brand": "FANCL", "apr": 77815.97, "may": 237674.95, "jun": 64129.99, "total": 555465.28, "units": 57}, {"offer_id": "Fancl Women 20+", "brand": "FANCL", "apr": 94279.08, "may": 96154.03, "jun": 38177.11, "total": 474256.18, "units": 334}, {"offer_id": "Centrum Sliver men 100", "brand": "CENTRUM", "apr": 93089.24, "may": 53448.38, "jun": 42120.0, "total": 458852.11, "units": 313}, {"offer_id": "Centrum Sliver men 275", "brand": "CENTRUM", "apr": 73556.58, "may": 58720.95, "jun": 23438.16, "total": 384076.94, "units": 126}, {"offer_id": "Centrum Sliver women 100", "brand": "CENTRUM", "apr": 69723.58, "may": 41097.58, "jun": 32364.81, "total": 308207.89, "units": 209}, {"offer_id": "Centrum Sliver Women 275", "brand": "CENTRUM", "apr": 40371.94, "may": 55865.79, "jun": 32046.95, "total": 287917.65, "units": 94}, {"offer_id": "Centrum Men 120", "brand": "CENTRUM", "apr": 68781.8, "may": 45996.15, "jun": 18268.54, "total": 280724.26, "units": 193}, {"offer_id": "LACTOFIT-Pink-60", "brand": "Lacto-fit", "apr": 74595.51, "may": 88935.23, "jun": 25257.47, "total": 264867.05, "units": 133}, {"offer_id": "Fancl Men 20+", "brand": "FANCL", "apr": 48568.72, "may": 37401.54, "jun": 19020.96, "total": 221232.74, "units": 155}, {"offer_id": "FANCL-Women-30-Plus-90", "brand": "FANCL", "apr": 23210.43, "may": 72822.93, "jun": 61018.73, "total": 221082.69, "units": 38}, {"offer_id": "Centrum Men 200", "brand": "CENTRUM", "apr": 48453.77, "may": 28463.9, "jun": 19042.19, "total": 217538.46, "units": 81}, {"offer_id": "Centrum Sliver men 200", "brand": "CENTRUM", "apr": 54086.25, "may": 44251.95, "jun": 7771.01, "total": 189167.5, "units": 70}, {"offer_id": "Centrum Sliver Women 200", "brand": "CENTRUM", "apr": 40410.89, "may": 33501.44, "jun": 5220.93, "total": 147446.0, "units": 55}, {"offer_id": "Fancl Brain 120", "brand": "FANCL", "apr": 53270.63, "may": 33092.23, "jun": 10876.19, "total": 147252.62, "units": 39}, {"offer_id": "Lacto-Fit-Yellow", "brand": "Lacto-fit", "apr": 41834.88, "may": 14076.83, "jun": 8433.39, "total": 145502.31, "units": 106}, {"offer_id": "Fancl Vegetable 150", "brand": "FANCL", "apr": 23139.26, "may": 37788.7, "jun": 12968.05, "total": 138053.61, "units": 209}, {"offer_id": "Centrum Women 200", "brand": "CENTRUM", "apr": 48523.93, "may": 30978.65, "jun": 5220.93, "total": 136510.93, "units": 51}, {"offer_id": null, "brand": null, "apr": 2198.57, "may": 83747.41, "jun": 29437.07, "total": 123071.84, "units": 37}, {"offer_id": "FANCL Adult Calorie 90", "brand": "FANCL", "apr": 35235.68, "may": 30579.14, "jun": 16638.76, "total": 122156.15, "units": 50}, {"offer_id": "Centrum Women 120", "brand": "CENTRUM", "apr": 23947.56, "may": 0.0, "jun": 0.0, "total": 116113.38, "units": 78}, {"offer_id": "Fancl Keen", "brand": "FANCL", "apr": 33856.53, "may": 41323.17, "jun": 4086.44, "total": 104308.55, "units": 51}, {"offer_id": "LACTOFIT-Green-60", "brand": "Lacto-fit", "apr": 26001.59, "may": 32929.37, "jun": 17405.87, "total": 103586.4, "units": 52}, {"offer_id": "Centrum Sliver men women 275", "brand": "CENTRUM", "apr": 0.0, "may": 44062.78, "jun": 11067.05, "total": 96583.64, "units": 17}, {"offer_id": "Fancl Fat Diet 90", "brand": "FANCL", "apr": 51051.27, "may": 21712.13, "jun": 15317.64, "total": 94428.45, "units": 30}, {"offer_id": "FANCL-Men-40-Plus-90", "brand": "FANCL", "apr": 0.0, "may": 33044.83, "jun": 59915.56, "total": 92960.38, "units": 11}, {"offer_id": "Inochi no Haha A 840", "brand": "Kobayashi", "apr": 16328.86, "may": 24040.99, "jun": 0.0, "total": 86613.52, "units": 21}, {"offer_id": "Fancl Collagen 180", "brand": "FANCL", "apr": 29232.87, "may": 17592.46, "jun": 6658.27, "total": 74189.69, "units": 44}, {"offer_id": "Perfect-astaxanthincollagenpowder-378g", "brand": "Asahi", "apr": 16359.42, "may": 35000.0, "jun": 15674.34, "total": 71029.46, "units": 18}, {"offer_id": "FANCL-enkin-30capsules", "brand": "FANCL", "apr": 29736.67, "may": 20052.13, "jun": 20437.26, "total": 70226.06, "units": 34}, {"offer_id": "Fancl Vitamin B", "brand": "FANCL", "apr": 11089.6, "may": 10131.72, "jun": 10976.27, "total": 61917.24, "units": 112}, {"offer_id": "EARTH JELLY-BERRIES-31", "brand": "Earth", "apr": 15938.43, "may": 17774.94, "jun": 27204.89, "total": 60918.26, "units": 31}, {"offer_id": "Earth-Mango-31", "brand": "Earth", "apr": 5303.24, "may": 27620.22, "jun": 25488.2, "total": 58411.66, "units": 31}, {"offer_id": "Foodology+guodongtiao+10pieces", "brand": "foodology", "apr": 15032.69, "may": 36081.85, "jun": 7158.49, "total": 58273.04, "units": 36}, {"offer_id": "Lacto-Fit-Yellow*3", "brand": "Lacto-fit", "apr": 7284.69, "may": 18036.03, "jun": 7939.31, "total": 55279.78, "units": 15}, {"offer_id": "LACTOFIT-Orange-60", "brand": "Lacto-fit", "apr": 18066.19, "may": 26960.99, "jun": 9659.55, "total": 54686.73, "units": 28}, {"offer_id": "Fancl Base Power 90", "brand": "FANCL", "apr": 17877.49, "may": 16515.3, "jun": 1159.26, "total": 54550.08, "units": 46}, {"offer_id": "FANCL Кальций + Магний", "brand": "FANCL", "apr": 7813.56, "may": 11963.36, "jun": 4465.5, "total": 48401.85, "units": 63}, {"offer_id": "PerfectAstacollagen-guokoulaogenfen-447g", "brand": "Asahi", "apr": 17790.38, "may": 12710.21, "jun": 8438.23, "total": 47859.64, "units": 11}, {"offer_id": "LACTOFIT-Blue-60", "brand": "Lacto-fit", "apr": 7986.1, "may": 27352.87, "jun": 1903.85, "total": 47446.78, "units": 24}, {"offer_id": "FANCL-kaluolimite-90tablets", "brand": "FANCL", "apr": 16219.83, "may": 25192.35, "jun": 1382.6, "total": 45859.86, "units": 32}];
-    76|
-    77|const COLORS = ['#6c8cff','#ff6b6b','#ffb86c','#51cf66','#cc5de8','#20c997','#fcc419','#ff922b','#748ffc','#e599f7'];
-    78|const MONTHS = {'feb':'2月','mar':'3月','apr':'4月','may':'5月','jun':'6月'};
-    79|const MONTH_ORDER = ['feb','mar','apr','may','jun'];
-    80|const MLABELS = ['2月','3月','4月','5月','6月'];
-    81|let charts = {};
-    82|
-    83|function fmt(n,f=2){return Number(n).toLocaleString('ru-RU',{minimumFractionDigits:f})}
-    84|function pct(v){return v!==null&&v!==undefined?Number(v).toFixed(1):'—'}
-    85|
-    86|document.querySelectorAll('.tab-btn').forEach(b=>{
-    87|  b.addEventListener('click',()=>{
-    88|    document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
-    89|    document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
-    90|    b.classList.add('active');
-    91|    document.getElementById('tab-'+b.dataset.tab).classList.add('active');
-    92|  });
-    93|});
-    94|
-    95|// ══════════════════════════════
-    96|// PAGE 1: OVERVIEW
-    97|// ══════════════════════════════
-    98|function renderOverview() {
-    99|  const total = BRANDS.reduce((s,b)=>s+b.total,0);
-   100|  const units = BRANDS.reduce((s,b)=>s+b.units,0);
-   101|  const skusT = BRANDS.reduce((s,b)=>s+b.skus,0);
-   102|  const aov = total/units;
-   103|  const top5 = BRANDS.slice(0,5);
-   104|  const top5pct = top5.reduce((s,b)=>s+b.total,0)/total*100;
-   105|  const monthly = BRANDS.reduce((a,b)=>{
-   106|    MONTH_ORDER.forEach(m=>{if(!a[m])a[m]=0;a[m]+=b[m]||0});
-   107|    return a;
-   108|  },{});
-   109|
-   110|  // Stats
-   111|  const s = total>0?`
-   112|  <div class="stats-row">
-   113|    <div class="stat-card"><div class="label">總銷售額(2-6月)</div><div class="value">₽${(total/1e6).toFixed(2)}M</div><div class="sub">${fmt(total)} ₽</div></div>
-   114|    <div class="stat-card"><div class="label">總銷量</div><div class="value">${fmt(units,0)} 件</div><div class="sub">${skusT} SKU</div></div>
-   115|    <div class="stat-card"><div class="label">整體客單價</div><div class="value">₽${fmt(aov)}</div><div class="sub">${BRANDS.length} 個品牌</div></div>
-   116|    <div class="stat-card"><div class="label">TOP5佔比</div><div class="value">${pct(top5pct)}%</div><div class="sub">₽${(top5.reduce((s,b)=>s+b.total,0)/1e6).toFixed(2)}M</div></div>
-   117|    <div class="stat-card"><div class="label">最高月銷售</div><div class="value">5月·₽${(monthly.may/1e6).toFixed(2)}M</div><div class="sub">6月(11天):₽${(monthly.jun/1e6).toFixed(2)}M</div></div>
-   118|  </div>`:'';
-   119|  document.getElementById('tab-overview').innerHTML = s;
-   120|
-   121|  // Monthly trend
-   122|  addChart('tab-overview','mTrend',MLABELS,[
-   123|    {label:'月銷售額(₽)',data:MONTH_ORDER.map(m=>monthly[m]),backgroundColor:COLORS[0]+'cc',borderRadius:3,borderSkipped:false},
-   124|    {label:'環比變化%',data:[null,...MONTH_ORDER.slice(1).map((m,i)=>{
-   125|      const p=monthly[MONTH_ORDER[i]],c=monthly[m];
-   126|      return p>0?((c-p)/p*100):0
-   127|    })],type:'line',borderColor:COLORS[2],backgroundColor:COLORS[2]+'20',fill:true,tension:.3,pointRadius:4,yAxisID:'y1',order:1}
-   128|  ],{
-   129|    y:{type:'linear',position:'left',ticks:{color:'#888',callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'#22222e'}},
-   130|    y1:{type:'linear',position:'right',ticks:{color:COLORS[2],callback:v=>v+'%'},grid:{display:false}}
-   131|  });
-   132|
-   133|  // Brand pie
-   134|  const pieLabels = top5.map(b=>b.brand);
-   135|  const pieData = top5.map(b=>b.total);
-   136|  if(BRANDS.length>5){pieLabels.push('其他('+(BRANDS.length-5)+'個)');pieData.push(BRANDS.slice(5).reduce((s,b)=>s+b.total,0));}
-   137|  addPie('tab-overview','bPie',pieLabels,pieData);
-   138|
-   139|  // Monthly by top5 brands
-   140|  const ds = top5.map((b,i)=>({
-   141|    label:b.brand,
-   142|    data:MONTH_ORDER.map(m=>b[m]||0),
-   143|    borderColor:COLORS[i],backgroundColor:COLORS[i]+'20',fill:false,tension:.3,pointRadius:3
-   144|  }));
-   145|  addChart('tab-overview','bTrend',MLABELS,ds,{
-   146|    y:{type:'linear',ticks:{color:'#888',callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'#22222e'}},
-   147|    x:{ticks:{color:'#666'},grid:{color:'#22222e'}}
-   148|  });
-   149|
-   150|  // Key insight
-   151|  const fanclMar = BRANDS.find(b=>b.brand==='FANCL');
-   152|  const centMay = BRANDS.find(b=>b.brand==='CENTRUM');
-   153|  const lacto = BRANDS.find(b=>b.brand==='Lacto-fit');
-   154|  document.getElementById('tab-overview').insertAdjacentHTML('beforeend',`
-   155|    <div class="insight-box"><h4>🔍 核心發現</h4>
-   156|    <p>• <b>FANCL</b>：佔 <span class="highlight">75.4%</span> 銷售額，2月→5月增長 <span class="success">+12.2%</span><br>
-   157|    • <b>Centrum</b>：連續下跌，2月→5月 <span class="danger">-38.2%</span>，需關注庫存/競品<br>
-   158|    • <b>Lacto-fit</b>：高速增長 <span class="success">+181.7%</span>（2月→5月），健康品牌<br>
-   159|    • <b>Asahi</b>：爆發式增長 <span class="success">+555%</span>（2月→5月），新品牌潛力大<br>
-   160|    • 6月前11天已達 ₽${(monthly.jun/1e6).toFixed(2)}M，若維持全月約₽${((monthly.jun/11*30)/1e6).toFixed(2)}M</p></div>
-   161|  `);
-   162|}
-   163|
-   164|// ══════════════════════════════
-   165|// PAGE 2: BRAND DETAIL
-   166|// ══════════════════════════════
-   167|function renderBrands() {
-   168|  let html = `<div class="filters">
-   169|    <div class="filter-group"><label>選擇品牌</label>
-   170|      <select id="bSel">${BRANDS.map((b,i)=>`<option value="${i}">${b.brand}</option>`).join('')}</select></div>
-   171|  </div><div id="bDetail"></div>`;
-   172|  document.getElementById('tab-brands').innerHTML = html;
-   173|
-   174|  document.getElementById('bSel').addEventListener('change',()=>showBrand(document.getElementById('bSel').value));
-   175|  showBrand(0);
-   176|}
-   177|
-   178|function showBrand(idx) {
-   179|  const b = BRANDS[idx];
-   180|  if(!b) return;
-   181|  const months = MONTH_ORDER.map(m=>({m,rev:b[m]||0,label:MONTHS[m]}));
-   182|  const maxRev = Math.max(...months.map(x=>x.rev),1);
-   183|  const growth2to5 = b.feb>0?((b.may-b.feb)/b.feb*100):null;
-   184|
-   185|  document.getElementById('bDetail').innerHTML = `
-   186|  <div class="stats-row">
-   187|    <div class="stat-card"><div class="label">品牌</div><div class="value">${b.brand}</div><div class="sub">${b.total>1e6?'₽'+(b.total/1e6).toFixed(2)+'M':fmt(b.total)}</div></div>
-   188|    <div class="stat-card"><div class="label">總銷量</div><div class="value">${fmt(b.units,0)}</div><div class="sub">${b.skus} SKU</div></div>
-   189|    <div class="stat-card"><div class="label">客單價</div><div class="value">₽${fmt(b.aov)}</div><div class="sub">佔比 ${pct(b.total/BRANDS.reduce((s,x)=>s+x.total,0)*100)}%</div></div>
-   190|    <div class="stat-card"><div class="label">加購率</div><div class="value">${pct(b.cart_rate)}%</div><div class="sub">轉化率 ${pct(b.conv)}%</div></div>
-   191|    <div class="stat-card"><div class="label">2→5月增長</div><div class="value ${growth2to5>0?'chg-up':'chg-down'}">${growth2to5!==null?(growth2to5>0?'+':'')+pct(growth2to5)+'%':'N/A'}</div><div class="sub">新開?${!b.feb?'Yes':''}</div></div>
-   192|  </div>
-   193|  <div class="chart-card"><h3>📊 月度銷售走勢</h3>
-   194|    <div style="padding:4px 0">${months.map(m=>{
-   195|      const pctW = maxRev>0?(m.rev/maxRev*100).toFixed(0):0;
-   196|      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-   197|        <span style="min-width:28px;font-size:12px;color:#888">${m.label}</span>
-   198|        <div style="flex:1;height:22px;background:#22222e;border-radius:4px;overflow:hidden">
-   199|          <div style="height:100%;width:${pctW}%;background:${COLORS[0]};border-radius:4px;min-width:${pctW>0?'4px':'0'}"></div>
-   200|        </div>
-   201|        <span style="min-width:80px;text-align:right;font-size:12px;color:#aaa">₽${(m.rev/1000).toFixed(0)}K</span>
-   202|      </div>`;
-   203|    }).join('')}
-   204|  </div></div>`;
-   205|}
-   206|
-   207|// ══════════════════════════════
-   208|// PAGE 3: SKU DIAGNOSTIC
-   209|// ══════════════════════════════
-   210|function renderSkus() {
-   211|  let html = `<div class="filters">
-   212|    <div class="filter-group"><label>排序</label>
-   213|      <select id="sSort">
-   214|        <option value="total">總銷售額</option>
-   215|        <option value="may">5月銷售額</option>
-   216|        <option value="growth">4→5月增長</option>
-   217|        <option value="decline">4→5月下跌</option>
-   218|      </select></div>
-   219|    <div class="filter-group"><label>品牌</label>
-   220|      <select id="sBrand"><option value="all">全部品牌</option>${[...new Set(TOP_SKUS.map(s=>s.brand).filter(Boolean))].sort().map(b=>`<option value="${b}">${b}</option>`).join('')}</select></div>
-   221|  </div>
-   222|  <div class="insight-box"><h4>🔍 4→5月變化總結</h4>
-   223|    <p id="sInsight">載入中...</p>
-   224|  </div>
-   225|  <div class="chart-card"><h3>📦 SKU 排行(可排序)</h3>
-   226|    <div class="table-scroll"><table class="data-table"><thead><tr>
-   227|      <th>offer_id</th><th>品牌</th><th>總銷售</th><th>總銷量</th>
-   228|      <th>4月</th><th>5月</th><th>6月</th><th>4→5月變化</th>
-   229|    </tr></thead><tbody id="sBody"></tbody></table></div>
-   230|  </div>`;
-   231|  document.getElementById('tab-skus').innerHTML = html;
-   232|  document.getElementById('sSort').addEventListener('change',sortSkus);
-   233|  document.getElementById('sBrand').addEventListener('change',sortSkus);
-   234|
-   235|  // Insights
-   236|  const growers = TOP_SKUS.filter(s=>s.apr>0&&s.may>0).sort((a,b)=>(b.may/b.apr)-(a.may/a.apr)).slice(0,5);
-   237|  const decliners = TOP_SKUS.filter(s=>s.apr>20000&&s.may<s.apr).sort((a,b)=>(a.may/a.apr)-(b.may/b.apr)).slice(0,5);
-   238|  document.getElementById('sInsight').innerHTML =
-   239|    `📈 增長最快: ${growers.map(s=>`<b>${s.offer_id}</b>(${(s.may/s.apr*100-100).toFixed(0)}%)`).join('、')}<br>`+
-   240|    `📉 下跌最多: ${decliners.map(s=>`<b>${s.offer_id}</b>(${((s.may/s.apr-1)*100).toFixed(0)}%)`).join('、')}`;
-   241|  sortSkus();
-   242|}
-   243|
-   244|function sortSkus() {
-   245|  const sort = document.getElementById('sSort').value;
-   246|  const brand = document.getElementById('sBrand').value;
-   247|  let data = brand==='all'?TOP_SKUS:TOP_SKUS.filter(s=>s.brand===brand);
-   248|
-   249|  if(sort==='total') data.sort((a,b)=>b.total-a.total);
-   250|  else if(sort==='may') data.sort((a,b)=>(b.may||0)-(a.may||0));
-   251|  else if(sort==='growth') data.sort((a,b)=>{
-   252|    const ga=a.apr>0?(a.may||0)/a.apr:0,gb=b.apr>0?(b.may||0)/b.apr:0;
-   253|    return gb-ga;
-   254|  });
-   255|  else data.sort((a,b)=>{
-   256|    const da=a.apr>0?(a.may||0)/a.apr:999,db=b.apr>0?(b.may||0)/b.apr:999;
-   257|    return da-db;
-   258|  });
-   259|
-   260|  document.getElementById('sBody').innerHTML = data.slice(0,50).map(s=>{
-   261|    const chg = s.apr>0?((s.may||0)/s.apr*100-100):null;
-   262|    const cls = chg!==null?(chg>20?'chg-up':chg<-20?'chg-down':''):'';
-   263|    return `<tr>
-   264|      <td>${s.offer_id||'—'}</td><td>${s.brand||'—'}</td>
-   265|      <td>₽${fmt(s.total)}</td><td>${fmt(s.units,0)}</td>
-   266|      <td>₽${fmt(s.apr||0)}</td><td>₽${fmt(s.may||0)}</td>
-   267|      <td>₽${fmt(s.jun||0)}</td>
-   268|      <td class="${cls}">${chg!==null?(chg>0?'+':'')+pct(chg)+'%':'—'}</td>
-   269|    </tr>`;
-   270|  }).join('');
-   271|}
-   272|
-   273|// ══════════════════════════════
-   274|// PAGE 4: GROWTH ANALYSIS
-   275|// ══════════════════════════════
-   276|function renderGrowth() {
-   277|  // Brand growth
-   278|  const bg = BRANDS.map(b=>{
-   279|    const g = b.feb>0?((b.may-b.feb)/b.feb*100):(b.mar>0?((b.may-b.mar)/b.mar*100):null);
-   280|    return {...b,growth:g};
-   281|  }).sort((a,b)=>(b.growth||-999)-(a.growth||-999));
-   282|
-   283|  const growers = bg.filter(b=>b.growth!==null&&b.total>50000).slice(0,6);
-   284|  const decliners = BRANDS.filter(b=>b.feb>0).sort((a,b)=>((a.may-a.feb)/a.feb)-((b.may-b.feb)/b.feb)).slice(0,3);
-   285|
-   286|  // SKU level growth
-   287|  const skuGrow = TOP_SKUS.filter(s=>s.apr>0&&s.may>0).sort((a,b)=>(b.may/b.apr)-(a.may/a.apr)).slice(0,10);
-   288|  const skuDecline = TOP_SKUS.filter(s=>s.apr>20000).sort((a,b)=>(a.may/a.apr)-(b.may/b.apr)).slice(0,10);
-   289|
-   290|  document.getElementById('tab-growth').innerHTML = `
-   291|  <div class="insight-box"><h4>📊 品牌增長排行榜 (2月→5月)</h4>
-   292|    ${growers.map(b=>{
-   293|      const g = b.growth||0;
-   294|      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-   295|        <span style="min-width:80px;font-size:12px;font-weight:500;color:#ddd">${b.brand}</span>
-   296|        <div style="flex:1;height:18px;background:#22222e;border-radius:4px;overflow:hidden">
-   297|          <div style="height:100%;width:${Math.min(g/5,100)}%;background:${g>0?'#51cf66':'#ff6b6b'};border-radius:4px;min-width:4px"></div>
-   298|        </div>
-   299|        <span style="min-width:60px;text-align:right;font-size:12px;color:${g>0?'#51cf66':'#ff6b6b'}">${g>0?'+':''}${pct(g)}%</span>
-   300|        <span style="min-width:70px;text-align:right;font-size:11px;color:#888">₽${(b.total/1000).toFixed(0)}K</span>
-   301|      </div>`;
-   302|    }).join('')}
-   303|  </div>
-   304|
-   305|  <div class="chart-card"><h3>📈 增長最快 SKU (4月→5月, 倍數)</h3>
-   306|    <canvas id="gSkuChart"></canvas>
-   307|  </div>
-   308|
-   309|  <div class="chart-card"><h3>📉 下跌最嚴重 SKU (4月→5月)</h3>
-   310|   <p style="font-size:12px;color:#888;margin-bottom:8px">注意：以下SKU中有部分係<b>改名/產品升級</b>導致4月有銷量5月歸零，唔一定係真跌</p>
-   311|   <div class="table-scroll"><table class="data-table"><thead><tr>
-   312|    <th>offer_id</th><th>品牌</th><th>4月</th><th>5月</th><th>變化</th><th>備註</th>
-   313|   </tr></thead><tbody>
-   314|    ${skuDecline.map(s=>{
-   315|      const chg = s.apr>0?((s.may||0)/s.apr*100-100):-100;
-   316|      // Check if the brand has a "Plus" alternative
-   317|      const baseName = (s.offer_id||'').replace(/\s+\d+\+/,'');
-   318|      const hasPlus = TOP_SKUS.some(x=>x.brand===s.brand&&x.offer_id!==s.offer_id&&(x.offer_id||'').includes('Plus')&&(x.offer_id||'').includes(baseName));
-   319|      return `<tr>
-   320|        <td>${s.offer_id||'—'}</td><td>${s.brand||'—'}</td>
-   321|        <td>₽${fmt(s.apr)}</td><td>₽${fmt(s.may||0)}</td>
-   322|        <td class="${chg>-20?'chg-down':''}">${pct(chg)}%</td>
-   323|        <td style="font-size:11px;color:#888">${hasPlus?'⚠️ 疑轉買大包裝Plus版':'—'}</td>
-   324|      </tr>`;
-   325|    }).join('')}
-   326|   </tbody></table></div>
-   327|  </div>
-   328|
-   329|  <div class="chart-card"><h3>📋 品牌組合健康度 (2月=100%)</h3>
-   330|    <canvas id="gIndexChart"></canvas>
-   331|    <p style="font-size:11px;color:#666;margin-top:6px">👇 揀品牌比較</p>
-   332|    <div style="display:flex;flex-wrap:wrap;gap:4px" id="gCheckboxes"></div>
-   333|  </div>
-   334|  `;
-   335|
-   336|  // SKU growth chart
-   337|  addChart('tab-growth','gSkuChart',skuGrow.map(s=>s.offer_id||'—'),[
-   338|    {label:'4月(₽)',data:skuGrow.map(s=>s.apr),backgroundColor:COLORS[0]+'cc',borderRadius:3,borderSkipped:false},
-   339|    {label:'5月(₽)',data:skuGrow.map(s=>s.may),backgroundColor:COLORS[2]+'cc',borderRadius:3,borderSkipped:false}
-   340|  ],{
-   341|    indexAxis:'y',
-   342|    x:{ticks:{color:'#888',callback:v=>v>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'#22222e'}},
-   343|    y:{ticks:{color:'#888',font:{size:9}},grid:{display:false}}
-   344|  });
-   345|
-   346|  // Index chart (Feb=100%)
-   347|  const selectedBrands = ['FANCL','CENTRUM','Lacto-fit','Asahi'];
-   348|  const indexLabels = MLABELS;
-   349|  const indexColors = ['#6c8cff','#ff6b6b','#51cf66','#cc5de8','#fcc419'];
-   350|
-   351|  function renderIndexChart(selected) {
-   352|    const datasets = selected.map((name,i)=>{
-   353|      const b = BRANDS.find(x=>x.brand===name);
-   354|      if(!b) return null;
-   355|      const base = b.feb||1;
-   356|      return {
-   357|        label:name,
-   358|        data:MONTH_ORDER.map(m=>b[m]?((b[m]/base)*100):0),
-   359|        borderColor:indexColors[i],backgroundColor:indexColors[i]+'15',
-   360|        fill:false,tension:.3,pointRadius:3
-   361|      };
-   362|    }).filter(Boolean);
-   363|    addChart('tab-growth','gIndexChart',indexLabels,datasets,{
-   364|      y:{type:'linear',ticks:{color:'#888',callback:v=>v+'%'},grid:{color:'#22222e'}},
-   365|      x:{ticks:{color:'#666'},grid:{color:'#22222e'}}
-   366|    });
-   367|  }
-   368|
-   369|  const brandsAvail = BRANDS.filter(b=>b.feb>0).map(b=>b.brand);
-   370|  const cbHtml = brandsAvail.map(b => {
-   371|    const checked = selectedBrands.includes(b)?'checked':'';
-   372|    return `<label style="font-size:12px;color:#aaa;display:flex;align-items:center;gap:4px;cursor:pointer">
-   373|      <input type="checkbox" ${checked} data-brand="${b}" style="accent-color:#6c8cff">${b}</label>`;
-   374|  }).join('');
-   375|  document.getElementById('gCheckboxes').innerHTML = cbHtml;
-   376|  document.querySelectorAll('#gCheckboxes input').forEach(cb=>{
-   377|    cb.addEventListener('change',()=>{
-   378|      const sel = [...document.querySelectorAll('#gCheckboxes input:checked')].map(x=>x.dataset.brand);
-   379|      renderIndexChart(sel);
-   380|    });
-   381|  });
-   382|  renderIndexChart(selectedBrands);
-   383|}
-   384|
-   385|// ── Chart helpers ──
-   386|function addChart(parent,id,labels,datasets,scales){
-   387|  const div = document.getElementById(parent);
-   388|  const existing = document.getElementById('c_'+id);
-   389|  if(existing) existing.remove();
-   390|  div.insertAdjacentHTML('beforeend',`<div class="chart-card" id="c_${id}"><canvas id="${id}"></canvas></div>`);
-   391|  const ctx = document.getElementById(id).getContext('2d');
-   392|  if(charts[id]) charts[id].destroy();
-   393|  charts[id] = new Chart(ctx,{
-   394|    type: datasets.some(d=>d.type==='line')?'bar':'bar',
-   395|    data:{labels,datasets},
-   396|    options:{
-   397|      responsive:true,maintainAspectRatio:false,
-   398|      interaction:{mode:'index',intersect:false},
-   399|      plugins:{
-   400|        legend:{labels:{color:'#888',usePointStyle:true,padding:12,font:{size:11}}},
-   401|        tooltip:{backgroundColor:'#1a1a24',titleColor:'#e0e0e0',bodyColor:'#ccc',borderColor:'#2a2a3a',borderWidth:1,padding:8}
-   402|      },scales:scales||{
-   403|        y:{ticks:{color:'#888',callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'#22222e'}},
-   404|        x:{ticks:{color:'#666'},grid:{color:'#22222e'}}
-   405|      }
-   406|    }
-   407|  });
-   408|}
-   409|
-   410|function addPie(parent,id,labels,data){
-   411|  const div = document.getElementById(parent);
-   412|  const existing = document.getElementById('c_'+id);
-   413|  if(existing) existing.remove();
-   414|  div.insertAdjacentHTML('beforeend',`<div class="chart-card" id="c_${id}"><h3>🏆 品牌佔比</h3><canvas id="${id}"></canvas></div>`);
-   415|  const ctx = document.getElementById(id).getContext('2d');
-   416|  if(charts[id]) charts[id].destroy();
-   417|  charts[id] = new Chart(ctx,{
-   418|    type:'doughnut',
-   419|    data:{labels,datasets:[{data,backgroundColor:COLORS.slice(0,labels.length),borderWidth:0}]},
-   420|    options:{
-   421|      responsive:true,maintainAspectRatio:false,
-   422|      plugins:{
-   423|        legend:{position:'right',labels:{color:'#888',padding:10,font:{size:11}}},
-   424|        tooltip:{backgroundColor:'#1a1a24',titleColor:'#e0e0e0',bodyColor:'#ccc',borderColor:'#2a2a3a',borderWidth:1,
-   425|          callbacks:{label:ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);return ctx.label+': ₽'+ctx.parsed.toLocaleString()+' ('+((ctx.parsed/t)*100).toFixed(1)+'%)'}}}
-   426|      }
-   427|    }
-   428|  });
-   429|}
-   430|
-   431|renderOverview();
-   432|renderBrands();
-   433|renderSkus();
-   434|renderGrowth();
-   435|</script>
-   436|</body>
-   437|</html>
-   438|
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ozon 深度分析报告</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f13;color:#e0e0e0;padding:20px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.header h1{font-size:22px;font-weight:600;color:#fff}
+.header h1 span{color:#6c8cff}
+.header a{color:#6c8cff;text-decoration:none;font-size:13px;padding:6px 14px;border:1px solid #2a2a3a;border-radius:8px;transition:all .15s}
+.header a:hover{background:#1a1a24}
+.tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid #2a2a3a;overflow-x:auto}
+.tab-btn{background:transparent;border:none;padding:10px 20px;color:#666;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s}
+.tab-btn.active{color:#6c8cff;border-bottom-color:#6c8cff}
+.tab-btn:hover{color:#aaa}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:#1a1a24;border-radius:12px;padding:16px;border:1px solid #2a2a3a}
+.stat-card .label{font-size:11px;color:#888;margin-bottom:4px}
+.stat-card .value{font-size:20px;font-weight:600;color:#fff}
+.stat-card .sub{font-size:11px;color:#666;margin-top:2px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.chart-card{background:#1a1a24;border-radius:12px;padding:20px;border:1px solid #2a2a3a;overflow:hidden}
+.chart-card.full{grid-column:1/-1}
+.chart-card h3{font-size:14px;color:#aaa;margin-bottom:12px;font-weight:500}
+.chart-card canvas{max-height:300px;height:300px;width:100%!important}
+.insight-box{background:linear-gradient(135deg,#1a1a44,#1a1a24);border:1px solid #2a2a5a;border-radius:12px;padding:16px;margin-bottom:16px}
+.insight-box h3{font-size:14px;color:#6c8cff;margin-bottom:8px}
+.insight-box ul{margin-left:16px;font-size:13px;color:#ccc;line-height:1.8}
+.insight-box strong{color:#fff}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#14141e;color:#888;font-weight:500;padding:8px 10px;text-align:left;position:sticky;top:0;white-space:nowrap}
+td{padding:6px 10px;border-top:1px solid #22222e}
+tr:hover td{background:#1e1e2c}
+.text-right{text-align:right}
+.green{color:#51cf66}
+.red{color:#ff6b6b}
+.brand-filter{margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap}
+.brand-tag{padding:4px 12px;border-radius:20px;border:1px solid #2a2a3a;font-size:12px;cursor:pointer;color:#888;background:transparent;transition:all .15s}
+.brand-tag.active{border-color:#6c8cff;color:#6c8cff;background:rgba(108,140,255,.1)}
+.brand-tag:hover{border-color:#555;color:#ccc}
+.filter-row{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.filter-row select,.filter-row input{background:#1a1a24;border:1px solid #2a2a3a;border-radius:8px;padding:6px 10px;color:#e0e0e0;font-size:13px;outline:none}
+.filter-row select:focus,.filter-row input:focus{border-color:#6c8cff}
+@media(max-width:900px){.chart-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📈 <span>Ozon</span> 深度分析报告</h1>
+  <a href="index.html">← 返回仪表板</a>
+</div>
+
+<div class="tabs" id="tabHeaders">
+  <button class="tab-btn active" data-tab="overview">📋 总览</button>
+  <button class="tab-btn" data-tab="brands">🏷️ 品牌明细</button>
+  <button class="tab-btn" data-tab="growth">📈 增长分析</button>
+  <button class="tab-btn" data-tab="sku">📦 SKU诊断</button>
+</div>
+
+<div class="tab-content active" id="tab-overview">
+  <div class="stats-row" id="overviewStats"></div>
+  <div class="insight-box">
+    <h3>🔍 核心发现</h3>
+    <ul id="coreInsights"></ul>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-card full">
+      <h3>📈 月度趋势（销售额 + 展现量 + 加购率 + 转化率）</h3>
+      <canvas id="ovTrendChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>🥧 品牌占比 TOP8</h3>
+      <canvas id="ovBrandPie"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>🏆 TOP5 品牌月度走势</h3>
+      <canvas id="ovBrandTrend"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="tab-content" id="tab-brands">
+  <div class="brand-filter" id="brandFilterTags"></div>
+  <div id="brandDetails"></div>
+</div>
+
+<div class="tab-content" id="tab-growth">
+  <div class="chart-grid">
+    <div class="chart-card full">
+      <h3>📈 品牌增长排行（2→5月）</h3>
+      <canvas id="gBrandRank"></canvas>
+    </div>
+    <div class="chart-card full">
+      <h3>🚀 增长最快 SKU（4月→5月，基数≥₽5K）</h3>
+      <canvas id="gSkuGainers"></canvas>
+    </div>
+    <div class="chart-card full">
+      <h3>📉 下跌最严重 SKU（4月→5月，基数≥₽5K）</h3>
+      <canvas id="gSkuLosers"></canvas>
+    </div>
+    <div class="chart-card full">
+      <h3>📊 品牌健康度指数（首个数据月=100）</h3>
+      <canvas id="gBrandIndex"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="tab-content" id="tab-sku">
+  <div class="filter-row">
+    <div><label style="font-size:12px;color:#888;display:block;margin-bottom:2px">品牌</label>
+      <select id="skuBrandFilter"><option value="all">全部品牌</option></select></div>
+    <div><label style="font-size:12px;color:#888;display:block;margin-bottom:2px">搜索 SKU</label>
+      <input type="text" id="skuSearchFilter" placeholder="offer_id..." style="width:200px"></div>
+    <div><label style="font-size:12px;color:#888;display:block;margin-bottom:2px">排序</label>
+      <select id="skuSortFilter">
+        <option value="revenue">销售额 ↓</option>
+        <option value="units">销量 ↓</option>
+        <option value="views">展现量 ↓</option>
+        <option value="growth">5月增长 ↓</option>
+        <option value="conversion">转化率 ↓</option>
+        <option value="cartRate">加购率 ↓</option>
+      </select></div>
+  </div>
+  <div class="chart-card full" style="padding:0">
+    <div style="max-height:600px;overflow-y:auto">
+      <table>
+        <thead><tr>
+          <th>offer_id</th><th>品牌</th>
+          <th class="text-right">总销售额</th><th class="text-right">总销量</th>
+          <th class="text-right">展现量</th><th class="text-right">加购率</th>
+          <th class="text-right">转化率</th><th class="text-right">退换率</th>
+          <th class="text-right">均价</th><th class="text-right">5月收入</th>
+          <th class="text-right">6月收入</th><th class="text-right">4→5月</th>
+          <th class="text-right">月数</th>
+        </tr></thead>
+        <tbody id="skuDetailTable"></tbody>
+      </table>
+    </div>
+    <div id="skuCount" style="padding:12px;text-align:center;font-size:12px;color:#888"></div>
+  </div>
+</div>
+
+<script>
+const D = {"months": ["2月", "3月", "4月", "5月", "6月"], "monthlyTrend": [{"month": "2月", "monthRu": "Фев", "revenue": 3370429.94, "units": 1450, "returns": 0, "views": 903629, "carts": 5810, "cartRate": 0.64, "conversion": 0.16, "returnRate": 0.0, "aov": 2324.43}, {"month": "3月", "monthRu": "Мар", "revenue": 4388263.14, "units": 1754, "returns": 0, "views": 1146471, "carts": 6517, "cartRate": 0.57, "conversion": 0.15, "returnRate": 0.0, "aov": 2501.86}, {"month": "4月", "monthRu": "Апр", "revenue": 4114417.29, "units": 1633, "returns": 0, "views": 1117774, "carts": 5939, "cartRate": 0.53, "conversion": 0.15, "returnRate": 0.0, "aov": 2519.55}, {"month": "5月", "monthRu": "Май", "revenue": 3832805.25, "units": 1401, "returns": 0, "views": 1604988, "carts": 7511, "cartRate": 0.47, "conversion": 0.09, "returnRate": 0.0, "aov": 2735.76}, {"month": "6月", "monthRu": "Июн", "revenue": 1764560.03, "units": 631, "returns": 0, "views": 960136, "carts": 3076, "cartRate": 0.32, "conversion": 0.07, "returnRate": 0.0, "aov": 2796.45}], "brandRanking": [{"brand": "FANCL", "totalRevenue": 13076037.22, "totalUnits": 4715, "totalViews": 3529362, "totalCarts": 18482, "cartRate": 0.52, "conversion": 0.13, "returnRate": 0.0, "growth": -48.0, "monthly": [{"month": "2月", "revenue": 2489479.51, "units": 992, "returns": 0, "views": 519022, "carts": 3729, "cartRate": 0.72, "conversion": 0.19}, {"month": "3月", "revenue": 3315999.21, "units": 1239, "returns": 0, "views": 650939, "carts": 4177, "cartRate": 0.64, "conversion": 0.19}, {"month": "4月", "revenue": 3183771.75, "units": 1169, "returns": 0, "views": 670725, "carts": 3797, "cartRate": 0.57, "conversion": 0.17}, {"month": "5月", "revenue": 2792635.58, "units": 922, "returns": 0, "views": 937786, "carts": 4778, "cartRate": 0.51, "conversion": 0.1}, {"month": "6月", "revenue": 1294151.17, "units": 393, "returns": 0, "views": 750890, "carts": 2001, "cartRate": 0.27, "conversion": 0.05}]}, {"brand": "CENTRUM", "totalRevenue": 2777491.61, "totalUnits": 1324, "totalViews": 1065603, "totalCarts": 4590, "cartRate": 0.43, "conversion": 0.12, "returnRate": 0.0, "growth": -72.7, "monthly": [{"month": "2月", "revenue": 720640.28, "units": 353, "returns": 0, "views": 247516, "carts": 1233, "cartRate": 0.5, "conversion": 0.14}, {"month": "3月", "revenue": 825086.31, "units": 380, "returns": 0, "views": 329592, "carts": 1350, "cartRate": 0.41, "conversion": 0.12}, {"month": "4月", "revenue": 589550.89, "units": 288, "returns": 0, "views": 231597, "carts": 952, "cartRate": 0.41, "conversion": 0.12}, {"month": "5月", "revenue": 445653.56, "units": 202, "returns": 0, "views": 192366, "carts": 758, "cartRate": 0.39, "conversion": 0.11}, {"month": "6月", "revenue": 196560.57, "units": 101, "returns": 0, "views": 64532, "carts": 297, "cartRate": 0.46, "conversion": 0.16}]}, {"brand": "Lacto-fit", "totalRevenue": 709881.42, "totalUnits": 366, "totalViews": 372608, "totalCarts": 2589, "cartRate": 0.69, "conversion": 0.1, "returnRate": 0.0, "growth": -3.9, "monthly": [{"month": "2月", "revenue": 79098.43, "units": 49, "returns": 0, "views": 47391, "carts": 383, "cartRate": 0.81, "conversion": 0.1}, {"month": "3月", "revenue": 150191.91, "units": 75, "returns": 0, "views": 72504, "carts": 585, "cartRate": 0.81, "conversion": 0.1}, {"month": "4月", "revenue": 181740.47, "units": 95, "returns": 0, "views": 92727, "carts": 657, "cartRate": 0.71, "conversion": 0.1}, {"month": "5月", "revenue": 222819.71, "units": 110, "returns": 0, "views": 105082, "carts": 713, "cartRate": 0.68, "conversion": 0.1}, {"month": "6月", "revenue": 76030.9, "units": 37, "returns": 0, "views": 54904, "carts": 251, "cartRate": 0.46, "conversion": 0.07}]}, {"brand": "Asahi", "totalRevenue": 242407.59, "totalUnits": 77, "totalViews": 92912, "totalCarts": 451, "cartRate": 0.49, "conversion": 0.08, "returnRate": 0.0, "growth": 192.8, "monthly": [{"month": "2月", "revenue": 15565.05, "units": 5, "returns": 0, "views": 5685, "carts": 51, "cartRate": 0.9, "conversion": 0.09}, {"month": "3月", "revenue": 22243.68, "units": 8, "returns": 0, "views": 8776, "carts": 56, "cartRate": 0.64, "conversion": 0.09}, {"month": "4月", "revenue": 57081.6, "units": 16, "returns": 0, "views": 14964, "carts": 76, "cartRate": 0.51, "conversion": 0.11}, {"month": "5月", "revenue": 101945.11, "units": 32, "returns": 0, "views": 48122, "carts": 193, "cartRate": 0.4, "conversion": 0.07}, {"month": "6月", "revenue": 45572.15, "units": 16, "returns": 0, "views": 15365, "carts": 75, "cartRate": 0.49, "conversion": 0.1}]}, {"brand": "Earth", "totalRevenue": 151261.52, "totalUnits": 79, "totalViews": 46585, "totalCarts": 367, "cartRate": 0.79, "conversion": 0.17, "returnRate": 0.0, "growth": 201.1, "monthly": [{"month": "4月", "revenue": 23882.16, "units": 9, "returns": 0, "views": 7444, "carts": 53, "cartRate": 0.71, "conversion": 0.12}, {"month": "5月", "revenue": 55464.47, "units": 31, "returns": 0, "views": 23377, "carts": 148, "cartRate": 0.63, "conversion": 0.13}, {"month": "6月", "revenue": 71914.89, "units": 39, "returns": 0, "views": 15764, "carts": 166, "cartRate": 1.05, "conversion": 0.25}]}, {"brand": "其他", "totalRevenue": 123071.85, "totalUnits": 37, "totalViews": 83526, "totalCarts": 253, "cartRate": 0.3, "conversion": 0.04, "returnRate": 0.0, "growth": 282.9, "monthly": [{"month": "2月", "revenue": 7688.8, "units": 3, "returns": 0, "views": 2434, "carts": 8, "cartRate": 0.33, "conversion": 0.12}, {"month": "3月", "revenue": 0, "units": 0, "returns": 0, "views": 2914, "carts": 3, "cartRate": 0.1, "conversion": 0.0}, {"month": "4月", "revenue": 2198.57, "units": 1, "returns": 0, "views": 15421, "carts": 18, "cartRate": 0.12, "conversion": 0.01}, {"month": "5月", "revenue": 83747.41, "units": 25, "returns": 0, "views": 56957, "carts": 184, "cartRate": 0.32, "conversion": 0.04}, {"month": "6月", "revenue": 29437.07, "units": 8, "returns": 0, "views": 5800, "carts": 40, "cartRate": 0.69, "conversion": 0.14}]}, {"brand": "DHC", "totalRevenue": 110632.62, "totalUnits": 115, "totalViews": 118910, "totalCarts": 720, "cartRate": 0.61, "conversion": 0.1, "returnRate": 0.0, "growth": -46.1, "monthly": [{"month": "2月", "revenue": 25315.55, "units": 26, "returns": 0, "views": 20676, "carts": 187, "cartRate": 0.9, "conversion": 0.13}, {"month": "3月", "revenue": 32311.36, "units": 31, "returns": 0, "views": 25744, "carts": 137, "cartRate": 0.53, "conversion": 0.12}, {"month": "4月", "revenue": 18756.24, "units": 21, "returns": 0, "views": 29215, "carts": 134, "cartRate": 0.46, "conversion": 0.07}, {"month": "5月", "revenue": 20598.01, "units": 22, "returns": 0, "views": 23977, "carts": 135, "cartRate": 0.56, "conversion": 0.09}, {"month": "6月", "revenue": 13651.46, "units": 15, "returns": 0, "views": 19298, "carts": 127, "cartRate": 0.66, "conversion": 0.08}]}, {"brand": "Kobayashi", "totalRevenue": 95532.25, "totalUnits": 24, "totalViews": 24220, "totalCarts": 201, "cartRate": 0.83, "conversion": 0.1, "returnRate": 0.0, "growth": -86.1, "monthly": [{"month": "2月", "revenue": 20613.12, "units": 5, "returns": 0, "views": 4437, "carts": 46, "cartRate": 1.04, "conversion": 0.11}, {"month": "3月", "revenue": 28722.42, "units": 7, "returns": 0, "views": 4574, "carts": 37, "cartRate": 0.81, "conversion": 0.15}, {"month": "4月", "revenue": 16328.86, "units": 4, "returns": 0, "views": 4825, "carts": 36, "cartRate": 0.75, "conversion": 0.08}, {"month": "5月", "revenue": 27006.92, "units": 7, "returns": 0, "views": 7760, "carts": 61, "cartRate": 0.79, "conversion": 0.09}, {"month": "6月", "revenue": 2860.93, "units": 1, "returns": 0, "views": 2624, "carts": 21, "cartRate": 0.8, "conversion": 0.04}]}, {"brand": "foodology", "totalRevenue": 88836.96, "totalUnits": 53, "totalViews": 127656, "totalCarts": 346, "cartRate": 0.27, "conversion": 0.04, "returnRate": 0.0, "growth": 0, "monthly": [{"month": "3月", "revenue": 0, "units": 0, "returns": 0, "views": 4, "carts": 0, "cartRate": 0.0, "conversion": 0.0}, {"month": "4月", "revenue": 15032.69, "units": 10, "returns": 0, "views": 3227, "carts": 63, "cartRate": 1.95, "conversion": 0.31}, {"month": "5月", "revenue": 54726.74, "units": 32, "returns": 0, "views": 112286, "carts": 238, "cartRate": 0.21, "conversion": 0.03}, {"month": "6月", "revenue": 19077.53, "units": 11, "returns": 0, "views": 12139, "carts": 45, "cartRate": 0.37, "conversion": 0.09}]}, {"brand": "KissMe", "totalRevenue": 25909.02, "totalUnits": 33, "totalViews": 40032, "totalCarts": 278, "cartRate": 0.69, "conversion": 0.08, "returnRate": 0.0, "growth": -80.4, "monthly": [{"month": "2月", "revenue": 7725.84, "units": 10, "returns": 0, "views": 8779, "carts": 86, "cartRate": 0.98, "conversion": 0.11}, {"month": "3月", "revenue": 8098.09, "units": 10, "returns": 0, "views": 10627, "carts": 95, "cartRate": 0.89, "conversion": 0.09}, {"month": "4月", "revenue": 5547.07, "units": 7, "returns": 0, "views": 10321, "carts": 44, "cartRate": 0.43, "conversion": 0.07}, {"month": "5月", "revenue": 3025.84, "units": 4, "returns": 0, "views": 7903, "carts": 40, "cartRate": 0.51, "conversion": 0.05}, {"month": "6月", "revenue": 1512.18, "units": 2, "returns": 0, "views": 2402, "carts": 13, "cartRate": 0.54, "conversion": 0.08}]}, {"brand": "Ettusais", "totalRevenue": 12747.25, "totalUnits": 21, "totalViews": 65986, "totalCarts": 262, "cartRate": 0.4, "conversion": 0.03, "returnRate": 0.0, "growth": -41.4, "monthly": [{"month": "2月", "revenue": 3072.15, "units": 5, "returns": 0, "views": 31666, "carts": 67, "cartRate": 0.21, "conversion": 0.02}, {"month": "3月", "revenue": 1248.55, "units": 2, "returns": 0, "views": 13642, "carts": 33, "cartRate": 0.24, "conversion": 0.01}, {"month": "4月", "revenue": 2445.13, "units": 4, "returns": 0, "views": 6194, "carts": 49, "cartRate": 0.79, "conversion": 0.06}, {"month": "5月", "revenue": 4181.72, "units": 7, "returns": 0, "views": 12759, "carts": 100, "cartRate": 0.78, "conversion": 0.05}, {"month": "6月", "revenue": 1799.7, "units": 3, "returns": 0, "views": 1725, "carts": 13, "cartRate": 0.75, "conversion": 0.17}]}, {"brand": "Caltrate", "totalRevenue": 11428.18, "totalUnits": 6, "totalViews": 7070, "totalCarts": 21, "cartRate": 0.3, "conversion": 0.08, "returnRate": 0.0, "growth": 0, "monthly": [{"month": "2月", "revenue": 0, "units": 0, "returns": 0, "views": 1907, "carts": 6, "cartRate": 0.31, "conversion": 0.0}, {"month": "3月", "revenue": 4361.61, "units": 2, "returns": 0, "views": 2127, "carts": 6, "cartRate": 0.28, "conversion": 0.09}, {"month": "4月", "revenue": 4204.39, "units": 2, "returns": 0, "views": 1292, "carts": 5, "cartRate": 0.39, "conversion": 0.15}, {"month": "5月", "revenue": 0, "units": 0, "returns": 0, "views": 1387, "carts": 3, "cartRate": 0.22, "conversion": 0.0}, {"month": "6月", "revenue": 2862.18, "units": 2, "returns": 0, "views": 357, "carts": 1, "cartRate": 0.28, "conversion": 0.56}]}, {"brand": "Move Free", "totalRevenue": 9628.41, "totalUnits": 2, "totalViews": 1920, "totalCarts": 11, "cartRate": 0.57, "conversion": 0.1, "returnRate": 0.0, "growth": -100.0, "monthly": [{"month": "4月", "revenue": 4609.61, "units": 1, "returns": 0, "views": 564, "carts": 4, "cartRate": 0.71, "conversion": 0.18}, {"month": "5月", "revenue": 5018.8, "units": 1, "returns": 0, "views": 970, "carts": 5, "cartRate": 0.52, "conversion": 0.1}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 386, "carts": 2, "cartRate": 0.52, "conversion": 0.0}]}, {"brand": "Puritan's Pride", "totalRevenue": 6416.12, "totalUnits": 2, "totalViews": 3740, "totalCarts": 9, "cartRate": 0.24, "conversion": 0.05, "returnRate": 0.0, "growth": 0, "monthly": [{"month": "4月", "revenue": 0, "units": 0, "returns": 0, "views": 1261, "carts": 2, "cartRate": 0.16, "conversion": 0.0}, {"month": "5月", "revenue": 3645.67, "units": 1, "returns": 0, "views": 1865, "carts": 5, "cartRate": 0.27, "conversion": 0.05}, {"month": "6月", "revenue": 2770.45, "units": 1, "returns": 0, "views": 614, "carts": 2, "cartRate": 0.33, "conversion": 0.16}]}, {"brand": "Jamieson", "totalRevenue": 5939.12, "totalUnits": 2, "totalViews": 5800, "totalCarts": 6, "cartRate": 0.1, "conversion": 0.03, "returnRate": 0.0, "growth": 0, "monthly": [{"month": "4月", "revenue": 0, "units": 0, "returns": 0, "views": 1762, "carts": 1, "cartRate": 0.06, "conversion": 0.0}, {"month": "5月", "revenue": 2514.32, "units": 1, "returns": 0, "views": 3075, "carts": 4, "cartRate": 0.13, "conversion": 0.03}, {"month": "6月", "revenue": 3424.8, "units": 1, "returns": 0, "views": 963, "carts": 1, "cartRate": 0.1, "conversion": 0.1}]}, {"brand": "Vlyco", "totalRevenue": 3541.97, "totalUnits": 2, "totalViews": 17772, "totalCarts": 18, "cartRate": 0.1, "conversion": 0.01, "returnRate": 0.0, "growth": 0, "monthly": [{"month": "4月", "revenue": 0, "units": 0, "returns": 0, "views": 27, "carts": 0, "cartRate": 0.0, "conversion": 0.0}, {"month": "5月", "revenue": 3541.97, "units": 2, "returns": 0, "views": 16208, "carts": 15, "cartRate": 0.09, "conversion": 0.01}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 1537, "carts": 3, "cartRate": 0.2, "conversion": 0.0}]}, {"brand": "Нет бренда", "totalRevenue": 3203.28, "totalUnits": 1, "totalViews": 1388, "totalCarts": 3, "cartRate": 0.22, "conversion": 0.07, "returnRate": 0.0, "growth": 0, "monthly": [{"month": "4月", "revenue": 0, "units": 0, "returns": 0, "views": 348, "carts": 1, "cartRate": 0.29, "conversion": 0.0}, {"month": "5月", "revenue": 3203.28, "units": 1, "returns": 0, "views": 688, "carts": 1, "cartRate": 0.15, "conversion": 0.15}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 352, "carts": 1, "cartRate": 0.28, "conversion": 0.0}]}, {"brand": "Kate", "totalRevenue": 3141.18, "totalUnits": 5, "totalViews": 24090, "totalCarts": 35, "cartRate": 0.15, "conversion": 0.02, "returnRate": 0.0, "growth": -100.0, "monthly": [{"month": "2月", "revenue": 1231.21, "units": 2, "returns": 0, "views": 6198, "carts": 5, "cartRate": 0.08, "conversion": 0.03}, {"month": "3月", "revenue": 0, "units": 0, "returns": 0, "views": 8314, "carts": 12, "cartRate": 0.14, "conversion": 0.0}, {"month": "4月", "revenue": 1909.97, "units": 3, "returns": 0, "views": 5523, "carts": 10, "cartRate": 0.18, "conversion": 0.05}, {"month": "5月", "revenue": 0, "units": 0, "returns": 0, "views": 3441, "carts": 7, "cartRate": 0.2, "conversion": 0.0}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 614, "carts": 1, "cartRate": 0.16, "conversion": 0.0}]}, {"brand": "L'il Critters", "totalRevenue": 3076.14, "totalUnits": 1, "totalViews": 938, "totalCarts": 4, "cartRate": 0.43, "conversion": 0.11, "returnRate": 0.0, "growth": 0, "monthly": [{"month": "4月", "revenue": 0, "units": 0, "returns": 0, "views": 294, "carts": 1, "cartRate": 0.34, "conversion": 0.0}, {"month": "5月", "revenue": 3076.14, "units": 1, "returns": 0, "views": 502, "carts": 3, "cartRate": 0.6, "conversion": 0.2}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 142, "carts": 0, "cartRate": 0.0, "conversion": 0.0}]}, {"brand": "Kerastase", "totalRevenue": 2958.11, "totalUnits": 1, "totalViews": 15554, "totalCarts": 43, "cartRate": 0.28, "conversion": 0.01, "returnRate": 0.0, "growth": 0, "monthly": [{"month": "2月", "revenue": 0, "units": 0, "returns": 0, "views": 4018, "carts": 8, "cartRate": 0.2, "conversion": 0.0}, {"month": "3月", "revenue": 0, "units": 0, "returns": 0, "views": 4925, "carts": 20, "cartRate": 0.41, "conversion": 0.0}, {"month": "4月", "revenue": 2958.11, "units": 1, "returns": 0, "views": 3438, "carts": 8, "cartRate": 0.23, "conversion": 0.03}, {"month": "5月", "revenue": 0, "units": 0, "returns": 0, "views": 2641, "carts": 5, "cartRate": 0.19, "conversion": 0.0}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 532, "carts": 2, "cartRate": 0.38, "conversion": 0.0}]}, {"brand": "Swisse", "totalRevenue": 2940.42, "totalUnits": 1, "totalViews": 1119, "totalCarts": 4, "cartRate": 0.36, "conversion": 0.09, "returnRate": 0.0, "growth": -100.0, "monthly": [{"month": "4月", "revenue": 2940.42, "units": 1, "returns": 0, "views": 315, "carts": 2, "cartRate": 0.63, "conversion": 0.32}, {"month": "5月", "revenue": 0, "units": 0, "returns": 0, "views": 520, "carts": 0, "cartRate": 0.0, "conversion": 0.0}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 284, "carts": 2, "cartRate": 0.7, "conversion": 0.0}]}, {"brand": "Stada", "totalRevenue": 2934.05, "totalUnits": 1, "totalViews": 3352, "totalCarts": 18, "cartRate": 0.54, "conversion": 0.03, "returnRate": 0.0, "growth": 0, "monthly": [{"month": "4月", "revenue": 0, "units": 0, "returns": 0, "views": 346, "carts": 1, "cartRate": 0.29, "conversion": 0.0}, {"month": "5月", "revenue": 0, "units": 0, "returns": 0, "views": 2105, "carts": 13, "cartRate": 0.62, "conversion": 0.0}, {"month": "6月", "revenue": 2934.05, "units": 1, "returns": 0, "views": 901, "carts": 4, "cartRate": 0.44, "conversion": 0.11}]}, {"brand": "3ce", "totalRevenue": 1459.36, "totalUnits": 1, "totalViews": 30589, "totalCarts": 34, "cartRate": 0.11, "conversion": 0.0, "returnRate": 0.0, "growth": 0, "monthly": [{"month": "2月", "revenue": 0, "units": 0, "returns": 0, "views": 4, "carts": 0, "cartRate": 0.0, "conversion": 0.0}, {"month": "3月", "revenue": 0, "units": 0, "returns": 0, "views": 8762, "carts": 6, "cartRate": 0.07, "conversion": 0.0}, {"month": "4月", "revenue": 1459.36, "units": 1, "returns": 0, "views": 5922, "carts": 10, "cartRate": 0.17, "conversion": 0.02}, {"month": "5月", "revenue": 0, "units": 0, "returns": 0, "views": 12930, "carts": 16, "cartRate": 0.12, "conversion": 0.0}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 2971, "carts": 2, "cartRate": 0.07, "conversion": 0.0}]}, {"brand": "BANDAI SPIRITS", "totalRevenue": 0, "totalUnits": 0, "totalViews": 409, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "growth": 0, "monthly": [{"month": "5月", "revenue": 0, "units": 0, "returns": 0, "views": 335, "carts": 0, "cartRate": 0.0, "conversion": 0.0}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 74, "carts": 0, "cartRate": 0.0, "conversion": 0.0}]}, {"brand": "Florasis", "totalRevenue": 0, "totalUnits": 0, "totalViews": 35567, "totalCarts": 96, "cartRate": 0.27, "conversion": 0.0, "returnRate": 0, "growth": 0, "monthly": [{"month": "3月", "revenue": 0, "units": 0, "returns": 0, "views": 113, "carts": 0, "cartRate": 0.0, "conversion": 0.0}, {"month": "4月", "revenue": 0, "units": 0, "returns": 0, "views": 8227, "carts": 13, "cartRate": 0.16, "conversion": 0.0}, {"month": "5月", "revenue": 0, "units": 0, "returns": 0, "views": 24199, "carts": 79, "cartRate": 0.33, "conversion": 0.0}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 3028, "carts": 4, "cartRate": 0.13, "conversion": 0.0}]}, {"brand": "Gucci", "totalRevenue": 0, "totalUnits": 0, "totalViews": 9314, "totalCarts": 5, "cartRate": 0.05, "conversion": 0.0, "returnRate": 0, "growth": 0, "monthly": [{"month": "2月", "revenue": 0, "units": 0, "returns": 0, "views": 3896, "carts": 1, "cartRate": 0.03, "conversion": 0.0}, {"month": "3月", "revenue": 0, "units": 0, "returns": 0, "views": 2914, "carts": 0, "cartRate": 0.0, "conversion": 0.0}, {"month": "4月", "revenue": 0, "units": 0, "returns": 0, "views": 783, "carts": 1, "cartRate": 0.13, "conversion": 0.0}, {"month": "5月", "revenue": 0, "units": 0, "returns": 0, "views": 1212, "carts": 2, "cartRate": 0.17, "conversion": 0.0}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 509, "carts": 1, "cartRate": 0.2, "conversion": 0.0}]}, {"brand": "Kaminomoto", "totalRevenue": 0, "totalUnits": 0, "totalViews": 1054, "totalCarts": 4, "cartRate": 0.38, "conversion": 0.0, "returnRate": 0, "growth": 0, "monthly": [{"month": "4月", "revenue": 0, "units": 0, "returns": 0, "views": 343, "carts": 0, "cartRate": 0.0, "conversion": 0.0}, {"month": "5月", "revenue": 0, "units": 0, "returns": 0, "views": 534, "carts": 3, "cartRate": 0.56, "conversion": 0.0}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 177, "carts": 1, "cartRate": 0.56, "conversion": 0.0}]}, {"brand": "OLLY", "totalRevenue": 0, "totalUnits": 0, "totalViews": 895, "totalCarts": 2, "cartRate": 0.22, "conversion": 0.0, "returnRate": 0, "growth": 0, "monthly": [{"month": "4月", "revenue": 0, "units": 0, "returns": 0, "views": 268, "carts": 1, "cartRate": 0.37, "conversion": 0.0}, {"month": "5月", "revenue": 0, "units": 0, "returns": 0, "views": 486, "carts": 1, "cartRate": 0.21, "conversion": 0.0}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 141, "carts": 0, "cartRate": 0.0, "conversion": 0.0}]}, {"brand": "YUHADA", "totalRevenue": 0, "totalUnits": 0, "totalViews": 4021, "totalCarts": 1, "cartRate": 0.02, "conversion": 0.0, "returnRate": 0, "growth": 0, "monthly": [{"month": "4月", "revenue": 0, "units": 0, "returns": 0, "views": 50, "carts": 0, "cartRate": 0.0, "conversion": 0.0}, {"month": "5月", "revenue": 0, "units": 0, "returns": 0, "views": 3025, "carts": 1, "cartRate": 0.03, "conversion": 0.0}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 946, "carts": 0, "cartRate": 0.0, "conversion": 0.0}]}, {"brand": "vitafusion", "totalRevenue": 0, "totalUnits": 0, "totalViews": 1006, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "growth": 0, "monthly": [{"month": "4月", "revenue": 0, "units": 0, "returns": 0, "views": 351, "carts": 0, "cartRate": 0.0, "conversion": 0.0}, {"month": "5月", "revenue": 0, "units": 0, "returns": 0, "views": 490, "carts": 0, "cartRate": 0.0, "conversion": 0.0}, {"month": "6月", "revenue": 0, "units": 0, "returns": 0, "views": 165, "carts": 0, "cartRate": 0.0, "conversion": 0.0}]}], "skuGrowthLeaders": [{"sku": "unknown", "brand": "其他", "aprRevenue": 2198.57, "mayRevenue": 83747.41, "junRevenue": 29437.07, "growthMayApr": 3709.2, "totalRevenue": 123071.85, "aprUnits": 1, "mayUnits": 25}, {"sku": "FANCL-Women-50-Plus-90", "brand": "FANCL", "aprRevenue": 62981.41, "mayRevenue": 365987.65, "junRevenue": 134100.67, "growthMayApr": 481.1, "totalRevenue": 727655.14, "aprUnits": 7, "mayUnits": 42}, {"sku": "Earth-Mango-31", "brand": "Earth", "aprRevenue": 5303.24, "mayRevenue": 27620.22, "junRevenue": 25488.2, "growthMayApr": 420.8, "totalRevenue": 58411.66, "aprUnits": 2, "mayUnits": 15}, {"sku": "Epios-xiaohuachangdao-2000tablets", "brand": "Asahi", "aprRevenue": 3082.41, "mayRevenue": 12015.15, "junRevenue": 5934.73, "growthMayApr": 289.8, "totalRevenue": 27456.7, "aprUnits": 1, "mayUnits": 4}, {"sku": "FANCL-Women-40-Plus-90", "brand": "FANCL", "aprRevenue": 92606.24, "mayRevenue": 329012.16, "junRevenue": 108313.08, "growthMayApr": 255.3, "totalRevenue": 624737.94, "aprUnits": 11, "mayUnits": 40}, {"sku": "LACTOFIT-Blue-60", "brand": "Lacto-fit", "aprRevenue": 7986.1, "mayRevenue": 27352.87, "junRevenue": 1903.85, "growthMayApr": 242.5, "totalRevenue": 47446.79, "aprUnits": 4, "mayUnits": 14}, {"sku": "FANCL-Women-30-Plus-90", "brand": "FANCL", "aprRevenue": 23210.43, "mayRevenue": 72822.93, "junRevenue": 61018.73, "growthMayApr": 213.8, "totalRevenue": 221082.69, "aprUnits": 4, "mayUnits": 13}, {"sku": "FANCL-Women-60-Plus-90", "brand": "FANCL", "aprRevenue": 77815.97, "mayRevenue": 237674.95, "junRevenue": 64129.99, "growthMayApr": 205.4, "totalRevenue": 555465.29, "aprUnits": 8, "mayUnits": 25}, {"sku": "Lacto-Fit-Yellow*3", "brand": "Lacto-fit", "aprRevenue": 7284.69, "mayRevenue": 18036.03, "junRevenue": 7939.31, "growthMayApr": 147.6, "totalRevenue": 55279.78, "aprUnits": 2, "mayUnits": 5}, {"sku": "Foodology+guodongtiao+10pieces", "brand": "foodology", "aprRevenue": 15032.69, "mayRevenue": 36081.85, "junRevenue": 7158.49, "growthMayApr": 140.0, "totalRevenue": 58273.03, "aprUnits": 10, "mayUnits": 22}, {"sku": "Asahi-aminoacidmultivitamin-200capsules", "brand": "Asahi", "aprRevenue": 5408.3, "mayRevenue": 12717.24, "junRevenue": 5179.85, "growthMayApr": 135.1, "totalRevenue": 37273.43, "aprUnits": 2, "mayUnits": 5}, {"sku": "Perfect-astaxanthincollagenpowder-378g", "brand": "Asahi", "aprRevenue": 16359.42, "mayRevenue": 35000.0, "junRevenue": 15674.34, "growthMayApr": 113.9, "totalRevenue": 71029.46, "aprUnits": 4, "mayUnits": 9}, {"sku": "EARTH JELLY-cherry-31", "brand": "Earth", "aprRevenue": 2640.49, "mayRevenue": 5350.2, "junRevenue": 9104.17, "growthMayApr": 102.6, "totalRevenue": 17094.86, "aprUnits": 1, "mayUnits": 3}, {"sku": "Centrum Sliver men 200*2", "brand": "CENTRUM", "aprRevenue": 4816.61, "mayRevenue": 9265.99, "junRevenue": 0, "growthMayApr": 92.4, "totalRevenue": 23951.74, "aprUnits": 1, "mayUnits": 2}, {"sku": "LACTOFIT-Pink-60*3", "brand": "Lacto-fit", "aprRevenue": 5971.51, "mayRevenue": 10770.79, "junRevenue": 5431.46, "growthMayApr": 80.4, "totalRevenue": 34754.78, "aprUnits": 1, "mayUnits": 2}], "skuGrowthFallers": [{"sku": "Fancl women 60+", "brand": "FANCL", "aprRevenue": 385671.18, "mayRevenue": 0, "junRevenue": 56455.63, "growthMayApr": -100.0, "totalRevenue": 1323583.72, "aprUnits": 110, "mayUnits": 0}, {"sku": "Centrum Women 120", "brand": "CENTRUM", "aprRevenue": 23947.56, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": -100.0, "totalRevenue": 116113.39, "aprUnits": 16, "mayUnits": 0}, {"sku": "Centrum Sliver Women 200*2", "brand": "CENTRUM", "aprRevenue": 19415.03, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": -100.0, "totalRevenue": 43717.98, "aprUnits": 4, "mayUnits": 0}, {"sku": "FANCL-kuaichangsapote-60capsules", "brand": "FANCL", "aprRevenue": 7551.64, "mayRevenue": 0, "junRevenue": 4771.48, "growthMayApr": -100.0, "totalRevenue": 12323.12, "aprUnits": 3, "mayUnits": 0}, {"sku": "Fancl women 50+", "brand": "FANCL", "aprRevenue": 429709.51, "mayRevenue": 120451.69, "junRevenue": 91277.58, "growthMayApr": -72.0, "totalRevenue": 1520791.36, "aprUnits": 135, "mayUnits": 38}, {"sku": "FANCL-premiumcalorielimit-120capsules", "brand": "FANCL", "aprRevenue": 29311.87, "mayRevenue": 9004.25, "junRevenue": 4521.2, "growthMayApr": -69.3, "totalRevenue": 42837.32, "aprUnits": 6, "mayUnits": 2}, {"sku": "FANCL-zhongxingzhifangsapote-120capsules", "brand": "FANCL", "aprRevenue": 6695.47, "mayRevenue": 2186.07, "junRevenue": 4361.21, "growthMayApr": -67.4, "totalRevenue": 13242.75, "aprUnits": 3, "mayUnits": 1}, {"sku": "Lacto-Fit-Yellow", "brand": "Lacto-fit", "aprRevenue": 41834.88, "mayRevenue": 14076.83, "junRevenue": 8433.39, "growthMayApr": -66.4, "totalRevenue": 145502.3, "aprUnits": 29, "mayUnits": 10}, {"sku": "FANCL-xuetangsupport-90tablets", "brand": "FANCL", "aprRevenue": 7165.45, "mayRevenue": 2874.2, "junRevenue": 0, "growthMayApr": -59.9, "totalRevenue": 10039.65, "aprUnits": 4, "mayUnits": 2}, {"sku": "Fancl Fat Diet 90", "brand": "FANCL", "aprRevenue": 51051.27, "mayRevenue": 21712.13, "junRevenue": 15317.64, "growthMayApr": -57.5, "totalRevenue": 94428.45, "aprUnits": 16, "mayUnits": 7}, {"sku": "asahi-DHA+EPA-240capsules", "brand": "Asahi", "aprRevenue": 6947.39, "mayRevenue": 3319.76, "junRevenue": 0, "growthMayApr": -52.2, "totalRevenue": 10267.15, "aprUnits": 2, "mayUnits": 1}, {"sku": "Fancl women 40+", "brand": "FANCL", "aprRevenue": 563240.46, "mayRevenue": 272699.7, "junRevenue": 121856.75, "growthMayApr": -51.6, "totalRevenue": 1892432.38, "aprUnits": 183, "mayUnits": 91}, {"sku": "DHC-IRON-20", "brand": "DHC", "aprRevenue": 6913.5, "mayRevenue": 3663.38, "junRevenue": 2252.92, "growthMayApr": -47.0, "totalRevenue": 22308.56, "aprUnits": 9, "mayUnits": 5}, {"sku": "KissMe Long and Curl Mascara", "brand": "KissMe", "aprRevenue": 5547.07, "mayRevenue": 3025.84, "junRevenue": 1512.18, "growthMayApr": -45.5, "totalRevenue": 25909.02, "aprUnits": 7, "mayUnits": 4}, {"sku": "Centrum Sliver men 100", "brand": "CENTRUM", "aprRevenue": 93089.25, "mayRevenue": 53448.38, "junRevenue": 42120.0, "growthMayApr": -42.6, "totalRevenue": 458852.11, "aprUnits": 63, "mayUnits": 38}], "brandShare": {"2月": {"FANCL": 73.9, "CENTRUM": 21.4, "Lacto-fit": 2.3, "DHC": 0.8, "Kobayashi": 0.6, "Asahi": 0.5, "KissMe": 0.2, "其他": 0.2, "Ettusais": 0.1, "Kate": 0.0, "Caltrate": 0.0, "Kerastase": 0.0, "Gucci": 0.0, "3ce": 0.0}, "3月": {"FANCL": 75.6, "CENTRUM": 18.8, "Lacto-fit": 3.4, "DHC": 0.7, "Kobayashi": 0.7, "Asahi": 0.5, "KissMe": 0.2, "Caltrate": 0.1, "Ettusais": 0.0, "Kerastase": 0.0, "Kate": 0.0, "其他": 0.0, "Gucci": 0.0, "3ce": 0.0, "Florasis": 0.0, "foodology": 0.0}, "4月": {"FANCL": 77.4, "CENTRUM": 14.3, "Lacto-fit": 4.4, "Asahi": 1.4, "Earth": 0.6, "DHC": 0.5, "Kobayashi": 0.4, "foodology": 0.4, "KissMe": 0.1, "Move Free": 0.1, "Caltrate": 0.1, "Kerastase": 0.1, "Swisse": 0.1, "Ettusais": 0.1, "其他": 0.1, "Kate": 0.0, "3ce": 0.0, "Kaminomoto": 0.0, "Jamieson": 0.0, "vitafusion": 0.0, "L'il Critters": 0.0, "Puritan's Pride": 0.0, "OLLY": 0.0, "Gucci": 0.0, "Нет бренда": 0.0, "Florasis": 0.0, "Stada": 0.0, "YUHADA": 0.0, "Vlyco": 0.0}, "5月": {"FANCL": 72.9, "CENTRUM": 11.6, "Lacto-fit": 5.8, "Asahi": 2.7, "其他": 2.2, "Earth": 1.4, "foodology": 1.4, "Kobayashi": 0.7, "DHC": 0.5, "Move Free": 0.1, "Ettusais": 0.1, "Puritan's Pride": 0.1, "Vlyco": 0.1, "Нет бренда": 0.1, "L'il Critters": 0.1, "KissMe": 0.1, "Jamieson": 0.1, "Kaminomoto": 0.0, "vitafusion": 0.0, "Swisse": 0.0, "OLLY": 0.0, "Caltrate": 0.0, "Kerastase": 0.0, "Kate": 0.0, "Gucci": 0.0, "3ce": 0.0, "Florasis": 0.0, "Stada": 0.0, "YUHADA": 0.0, "BANDAI SPIRITS": 0.0}, "6月": {"FANCL": 73.3, "CENTRUM": 11.1, "Lacto-fit": 4.3, "Earth": 4.1, "Asahi": 2.6, "其他": 1.7, "foodology": 1.1, "DHC": 0.8, "Jamieson": 0.2, "Stada": 0.2, "Caltrate": 0.2, "Kobayashi": 0.2, "Puritan's Pride": 0.2, "Ettusais": 0.1, "KissMe": 0.1, "Kaminomoto": 0.0, "Move Free": 0.0, "vitafusion": 0.0, "L'il Critters": 0.0, "Swisse": 0.0, "OLLY": 0.0, "Kerastase": 0.0, "Kate": 0.0, "Gucci": 0.0, "Нет бренда": 0.0, "3ce": 0.0, "Florasis": 0.0, "YUHADA": 0.0, "Vlyco": 0.0, "BANDAI SPIRITS": 0.0}}, "topBrands": ["FANCL", "CENTRUM", "Lacto-fit", "Asahi", "Earth", "其他", "DHC", "Kobayashi"], "allSkuDetails": [{"sku": "Fancl women 40+", "brand": "FANCL", "totalRevenue": 1892432.38, "totalUnits": 628, "totalReturns": 0, "totalViews": 351437, "totalCarts": 2455, "cartRate": 0.7, "conversion": 0.18, "returnRate": 0.0, "aov": 3013.43, "mayRevenue": 272699.7, "junRevenue": 121856.75, "growthMayApr": -51.6, "monthsActive": 5}, {"sku": "Fancl women 50+", "brand": "FANCL", "totalRevenue": 1520791.36, "totalUnits": 478, "totalReturns": 0, "totalViews": 215309, "totalCarts": 1613, "cartRate": 0.75, "conversion": 0.22, "returnRate": 0.0, "aov": 3181.57, "mayRevenue": 120451.69, "junRevenue": 91277.58, "growthMayApr": -72.0, "monthsActive": 5}, {"sku": "Fancl women 60+", "brand": "FANCL", "totalRevenue": 1323583.72, "totalUnits": 379, "totalReturns": 0, "totalViews": 245089, "totalCarts": 1345, "cartRate": 0.55, "conversion": 0.15, "returnRate": 0.0, "aov": 3492.31, "mayRevenue": 0, "junRevenue": 56455.63, "growthMayApr": -100.0, "monthsActive": 4}, {"sku": "Fancl women 30+", "brand": "FANCL", "totalRevenue": 1000901.56, "totalUnits": 521, "totalReturns": 0, "totalViews": 273005, "totalCarts": 1710, "cartRate": 0.63, "conversion": 0.19, "returnRate": 0.0, "aov": 1921.12, "mayRevenue": 149546.82, "junRevenue": 31299.7, "growthMayApr": -35.2, "monthsActive": 5}, {"sku": "Fancl Men 50+", "brand": "FANCL", "totalRevenue": 974461.04, "totalUnits": 310, "totalReturns": 0, "totalViews": 140298, "totalCarts": 762, "cartRate": 0.54, "conversion": 0.22, "returnRate": 0.0, "aov": 3143.42, "mayRevenue": 182172.73, "junRevenue": 96266.31, "growthMayApr": -29.6, "monthsActive": 5}, {"sku": "Fancl Men 40+", "brand": "FANCL", "totalRevenue": 822372.2, "totalUnits": 269, "totalReturns": 0, "totalViews": 156907, "totalCarts": 761, "cartRate": 0.49, "conversion": 0.17, "returnRate": 0.0, "aov": 3057.15, "mayRevenue": 232230.41, "junRevenue": 101868.27, "growthMayApr": 8.0, "monthsActive": 5}, {"sku": "Fancl Men 30+", "brand": "FANCL", "totalRevenue": 759611.06, "totalUnits": 408, "totalReturns": 0, "totalViews": 171873, "totalCarts": 852, "cartRate": 0.5, "conversion": 0.24, "returnRate": 0.0, "aov": 1861.79, "mayRevenue": 148473.08, "junRevenue": 60468.8, "growthMayApr": -9.5, "monthsActive": 5}, {"sku": "FANCL-Women-50-Plus-90", "brand": "FANCL", "totalRevenue": 727655.14, "totalUnits": 81, "totalReturns": 0, "totalViews": 87719, "totalCarts": 441, "cartRate": 0.5, "conversion": 0.09, "returnRate": 0.0, "aov": 8983.4, "mayRevenue": 365987.65, "junRevenue": 134100.67, "growthMayApr": 481.1, "monthsActive": 5}, {"sku": "Fancl Men 60+", "brand": "FANCL", "totalRevenue": 637427.44, "totalUnits": 187, "totalReturns": 0, "totalViews": 128266, "totalCarts": 469, "cartRate": 0.37, "conversion": 0.15, "returnRate": 0.0, "aov": 3408.7, "mayRevenue": 183674.16, "junRevenue": 36388.18, "growthMayApr": 27.2, "monthsActive": 5}, {"sku": "FANCL-Women-40-Plus-90", "brand": "FANCL", "totalRevenue": 624737.94, "totalUnits": 74, "totalReturns": 0, "totalViews": 48686, "totalCarts": 424, "cartRate": 0.87, "conversion": 0.15, "returnRate": 0.0, "aov": 8442.4, "mayRevenue": 329012.16, "junRevenue": 108313.08, "growthMayApr": 255.3, "monthsActive": 5}, {"sku": "FANCL-Women-60-Plus-90", "brand": "FANCL", "totalRevenue": 555465.29, "totalUnits": 57, "totalReturns": 0, "totalViews": 51649, "totalCarts": 318, "cartRate": 0.62, "conversion": 0.11, "returnRate": 0.0, "aov": 9745.01, "mayRevenue": 237674.95, "junRevenue": 64129.99, "growthMayApr": 205.4, "monthsActive": 5}, {"sku": "Fancl Women 20+", "brand": "FANCL", "totalRevenue": 474256.18, "totalUnits": 334, "totalReturns": 0, "totalViews": 137327, "totalCarts": 1089, "cartRate": 0.79, "conversion": 0.24, "returnRate": 0.0, "aov": 1419.93, "mayRevenue": 96154.03, "junRevenue": 38177.11, "growthMayApr": 2.0, "monthsActive": 5}, {"sku": "Centrum Sliver men 100", "brand": "CENTRUM", "totalRevenue": 458852.11, "totalUnits": 313, "totalReturns": 0, "totalViews": 178788, "totalCarts": 905, "cartRate": 0.51, "conversion": 0.18, "returnRate": 0.0, "aov": 1465.98, "mayRevenue": 53448.38, "junRevenue": 42120.0, "growthMayApr": -42.6, "monthsActive": 5}, {"sku": "Centrum Sliver men 275", "brand": "CENTRUM", "totalRevenue": 384076.94, "totalUnits": 126, "totalReturns": 0, "totalViews": 79801, "totalCarts": 356, "cartRate": 0.45, "conversion": 0.16, "returnRate": 0.0, "aov": 3048.23, "mayRevenue": 58720.95, "junRevenue": 23438.16, "growthMayApr": -20.2, "monthsActive": 5}, {"sku": "Centrum Sliver women 100", "brand": "CENTRUM", "totalRevenue": 308207.89, "totalUnits": 209, "totalReturns": 0, "totalViews": 153552, "totalCarts": 749, "cartRate": 0.49, "conversion": 0.14, "returnRate": 0.0, "aov": 1474.68, "mayRevenue": 41097.58, "junRevenue": 32364.81, "growthMayApr": -41.1, "monthsActive": 5}, {"sku": "Centrum Sliver Women 275", "brand": "CENTRUM", "totalRevenue": 287917.65, "totalUnits": 94, "totalReturns": 0, "totalViews": 90014, "totalCarts": 362, "cartRate": 0.4, "conversion": 0.1, "returnRate": 0.0, "aov": 3062.95, "mayRevenue": 55865.79, "junRevenue": 32046.95, "growthMayApr": 38.4, "monthsActive": 5}, {"sku": "Centrum Men 120", "brand": "CENTRUM", "totalRevenue": 280724.25, "totalUnits": 193, "totalReturns": 0, "totalViews": 161036, "totalCarts": 688, "cartRate": 0.43, "conversion": 0.12, "returnRate": 0.0, "aov": 1454.53, "mayRevenue": 45996.15, "junRevenue": 18268.54, "growthMayApr": -33.1, "monthsActive": 5}, {"sku": "LACTOFIT-Pink-60", "brand": "Lacto-fit", "totalRevenue": 264867.04, "totalUnits": 133, "totalReturns": 0, "totalViews": 120957, "totalCarts": 1003, "cartRate": 0.83, "conversion": 0.11, "returnRate": 0.0, "aov": 1991.48, "mayRevenue": 88935.23, "junRevenue": 25257.47, "growthMayApr": 19.2, "monthsActive": 5}, {"sku": "Fancl Men 20+", "brand": "FANCL", "totalRevenue": 221232.75, "totalUnits": 155, "totalReturns": 0, "totalViews": 71392, "totalCarts": 322, "cartRate": 0.45, "conversion": 0.22, "returnRate": 0.0, "aov": 1427.31, "mayRevenue": 37401.54, "junRevenue": 19020.96, "growthMayApr": -23.0, "monthsActive": 5}, {"sku": "FANCL-Women-30-Plus-90", "brand": "FANCL", "totalRevenue": 221082.69, "totalUnits": 38, "totalReturns": 0, "totalViews": 33840, "totalCarts": 205, "cartRate": 0.61, "conversion": 0.11, "returnRate": 0.0, "aov": 5817.97, "mayRevenue": 72822.93, "junRevenue": 61018.73, "growthMayApr": 213.8, "monthsActive": 5}, {"sku": "Centrum Men 200", "brand": "CENTRUM", "totalRevenue": 217538.47, "totalUnits": 81, "totalReturns": 0, "totalViews": 80536, "totalCarts": 272, "cartRate": 0.34, "conversion": 0.1, "returnRate": 0.0, "aov": 2685.66, "mayRevenue": 28463.9, "junRevenue": 19042.19, "growthMayApr": -41.3, "monthsActive": 5}, {"sku": "Centrum Sliver men 200", "brand": "CENTRUM", "totalRevenue": 189167.5, "totalUnits": 70, "totalReturns": 0, "totalViews": 51294, "totalCarts": 194, "cartRate": 0.38, "conversion": 0.14, "returnRate": 0.0, "aov": 2702.39, "mayRevenue": 44251.95, "junRevenue": 7771.01, "growthMayApr": -18.2, "monthsActive": 5}, {"sku": "Centrum Sliver Women 200", "brand": "CENTRUM", "totalRevenue": 147446.02, "totalUnits": 55, "totalReturns": 0, "totalViews": 66115, "totalCarts": 238, "cartRate": 0.36, "conversion": 0.08, "returnRate": 0.0, "aov": 2680.84, "mayRevenue": 33501.44, "junRevenue": 5220.93, "growthMayApr": -17.1, "monthsActive": 5}, {"sku": "Fancl Brain 120", "brand": "FANCL", "totalRevenue": 147252.63, "totalUnits": 39, "totalReturns": 0, "totalViews": 43130, "totalCarts": 286, "cartRate": 0.66, "conversion": 0.09, "returnRate": 0.0, "aov": 3775.71, "mayRevenue": 33092.23, "junRevenue": 10876.19, "growthMayApr": -37.9, "monthsActive": 5}, {"sku": "Lacto-Fit-Yellow", "brand": "Lacto-fit", "totalRevenue": 145502.3, "totalUnits": 106, "totalReturns": 0, "totalViews": 127226, "totalCarts": 753, "cartRate": 0.59, "conversion": 0.08, "returnRate": 0.0, "aov": 1372.66, "mayRevenue": 14076.83, "junRevenue": 8433.39, "growthMayApr": -66.4, "monthsActive": 5}, {"sku": "Fancl Vegetable 150", "brand": "FANCL", "totalRevenue": 138053.61, "totalUnits": 209, "totalReturns": 0, "totalViews": 323671, "totalCarts": 941, "cartRate": 0.29, "conversion": 0.06, "returnRate": 0.0, "aov": 660.54, "mayRevenue": 37788.7, "junRevenue": 12968.05, "growthMayApr": 63.3, "monthsActive": 5}, {"sku": "Centrum Women 200", "brand": "CENTRUM", "totalRevenue": 136510.95, "totalUnits": 51, "totalReturns": 0, "totalViews": 54987, "totalCarts": 243, "cartRate": 0.44, "conversion": 0.09, "returnRate": 0.0, "aov": 2676.69, "mayRevenue": 30978.65, "junRevenue": 5220.93, "growthMayApr": -36.2, "monthsActive": 5}, {"sku": "unknown", "brand": "其他", "totalRevenue": 123071.85, "totalUnits": 37, "totalReturns": 0, "totalViews": 83526, "totalCarts": 253, "cartRate": 0.3, "conversion": 0.04, "returnRate": 0.0, "aov": 3326.27, "mayRevenue": 83747.41, "junRevenue": 29437.07, "growthMayApr": 3709.2, "monthsActive": 5}, {"sku": "FANCL Adult Calorie 90", "brand": "FANCL", "totalRevenue": 122156.15, "totalUnits": 50, "totalReturns": 0, "totalViews": 122562, "totalCarts": 559, "cartRate": 0.46, "conversion": 0.04, "returnRate": 0.0, "aov": 2443.12, "mayRevenue": 30579.14, "junRevenue": 16638.76, "growthMayApr": -13.2, "monthsActive": 5}, {"sku": "Centrum Women 120", "brand": "CENTRUM", "totalRevenue": 116113.39, "totalUnits": 78, "totalReturns": 0, "totalViews": 76579, "totalCarts": 316, "cartRate": 0.41, "conversion": 0.1, "returnRate": 0.0, "aov": 1488.63, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": -100.0, "monthsActive": 5}, {"sku": "Fancl Keen", "brand": "FANCL", "totalRevenue": 104308.55, "totalUnits": 51, "totalReturns": 0, "totalViews": 59219, "totalCarts": 349, "cartRate": 0.59, "conversion": 0.09, "returnRate": 0.0, "aov": 2045.27, "mayRevenue": 41323.17, "junRevenue": 4086.44, "growthMayApr": 22.1, "monthsActive": 5}, {"sku": "LACTOFIT-Green-60", "brand": "Lacto-fit", "totalRevenue": 103586.4, "totalUnits": 52, "totalReturns": 0, "totalViews": 50846, "totalCarts": 348, "cartRate": 0.68, "conversion": 0.1, "returnRate": 0.0, "aov": 1992.05, "mayRevenue": 32929.37, "junRevenue": 17405.87, "growthMayApr": 26.6, "monthsActive": 5}, {"sku": "Centrum Sliver men women 275", "brand": "CENTRUM", "totalRevenue": 96583.65, "totalUnits": 17, "totalReturns": 0, "totalViews": 8250, "totalCarts": 50, "cartRate": 0.61, "conversion": 0.21, "returnRate": 0.0, "aov": 5681.39, "mayRevenue": 44062.78, "junRevenue": 11067.05, "growthMayApr": 0, "monthsActive": 5}, {"sku": "Fancl Fat Diet 90", "brand": "FANCL", "totalRevenue": 94428.45, "totalUnits": 30, "totalReturns": 0, "totalViews": 77467, "totalCarts": 326, "cartRate": 0.42, "conversion": 0.04, "returnRate": 0.0, "aov": 3147.61, "mayRevenue": 21712.13, "junRevenue": 15317.64, "growthMayApr": -57.5, "monthsActive": 5}, {"sku": "FANCL-Men-40-Plus-90", "brand": "FANCL", "totalRevenue": 92960.39, "totalUnits": 11, "totalReturns": 0, "totalViews": 2763, "totalCarts": 26, "cartRate": 0.94, "conversion": 0.4, "returnRate": 0.0, "aov": 8450.94, "mayRevenue": 33044.83, "junRevenue": 59915.56, "growthMayApr": 0, "monthsActive": 2}, {"sku": "Inochi no Haha A 840", "brand": "Kobayashi", "totalRevenue": 86613.51, "totalUnits": 21, "totalReturns": 0, "totalViews": 15015, "totalCarts": 139, "cartRate": 0.93, "conversion": 0.14, "returnRate": 0.0, "aov": 4124.45, "mayRevenue": 24040.99, "junRevenue": 0, "growthMayApr": 47.2, "monthsActive": 5}, {"sku": "Fancl Collagen 180", "brand": "FANCL", "totalRevenue": 74189.69, "totalUnits": 44, "totalReturns": 0, "totalViews": 55912, "totalCarts": 361, "cartRate": 0.65, "conversion": 0.08, "returnRate": 0.0, "aov": 1686.13, "mayRevenue": 17592.46, "junRevenue": 6658.27, "growthMayApr": -39.8, "monthsActive": 5}, {"sku": "Perfect-astaxanthincollagenpowder-378g", "brand": "Asahi", "totalRevenue": 71029.46, "totalUnits": 18, "totalReturns": 0, "totalViews": 9957, "totalCarts": 72, "cartRate": 0.72, "conversion": 0.18, "returnRate": 0.0, "aov": 3946.08, "mayRevenue": 35000.0, "junRevenue": 15674.34, "growthMayApr": 113.9, "monthsActive": 5}, {"sku": "FANCL-enkin-30capsules", "brand": "FANCL", "totalRevenue": 70226.06, "totalUnits": 34, "totalReturns": 0, "totalViews": 50346, "totalCarts": 323, "cartRate": 0.64, "conversion": 0.07, "returnRate": 0.0, "aov": 2065.47, "mayRevenue": 20052.13, "junRevenue": 20437.26, "growthMayApr": -32.6, "monthsActive": 4}, {"sku": "Centrum Sliver men + Women", "brand": "CENTRUM", "totalRevenue": 69315.87, "totalUnits": 14, "totalReturns": 0, "totalViews": 8257, "totalCarts": 56, "cartRate": 0.68, "conversion": 0.17, "returnRate": 0.0, "aov": 4951.13, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "Fancl Vitamin B", "brand": "FANCL", "totalRevenue": 61917.24, "totalUnits": 112, "totalReturns": 0, "totalViews": 310799, "totalCarts": 597, "cartRate": 0.19, "conversion": 0.04, "returnRate": 0.0, "aov": 552.83, "mayRevenue": 10131.72, "junRevenue": 10976.27, "growthMayApr": -8.6, "monthsActive": 5}, {"sku": "EARTH JELLY-BERRIES-31", "brand": "Earth", "totalRevenue": 60918.26, "totalUnits": 31, "totalReturns": 0, "totalViews": 11860, "totalCarts": 89, "cartRate": 0.75, "conversion": 0.26, "returnRate": 0.0, "aov": 1965.11, "mayRevenue": 17774.94, "junRevenue": 27204.89, "growthMayApr": 11.5, "monthsActive": 3}, {"sku": "Earth-Mango-31", "brand": "Earth", "totalRevenue": 58411.66, "totalUnits": 31, "totalReturns": 0, "totalViews": 16016, "totalCarts": 160, "cartRate": 1.0, "conversion": 0.19, "returnRate": 0.0, "aov": 1884.25, "mayRevenue": 27620.22, "junRevenue": 25488.2, "growthMayApr": 420.8, "monthsActive": 3}, {"sku": "Foodology+guodongtiao+10pieces", "brand": "foodology", "totalRevenue": 58273.03, "totalUnits": 36, "totalReturns": 0, "totalViews": 90519, "totalCarts": 215, "cartRate": 0.24, "conversion": 0.04, "returnRate": 0.0, "aov": 1618.7, "mayRevenue": 36081.85, "junRevenue": 7158.49, "growthMayApr": 140.0, "monthsActive": 4}, {"sku": "Lacto-Fit-Yellow*3", "brand": "Lacto-fit", "totalRevenue": 55279.78, "totalUnits": 15, "totalReturns": 0, "totalViews": 12125, "totalCarts": 91, "cartRate": 0.75, "conversion": 0.12, "returnRate": 0.0, "aov": 3685.32, "mayRevenue": 18036.03, "junRevenue": 7939.31, "growthMayApr": 147.6, "monthsActive": 5}, {"sku": "LACTOFIT-Orange-60", "brand": "Lacto-fit", "totalRevenue": 54686.73, "totalUnits": 28, "totalReturns": 0, "totalViews": 23166, "totalCarts": 183, "cartRate": 0.79, "conversion": 0.12, "returnRate": 0.0, "aov": 1953.1, "mayRevenue": 26960.99, "junRevenue": 9659.55, "growthMayApr": 49.2, "monthsActive": 3}, {"sku": "Fancl Base Power 90", "brand": "FANCL", "totalRevenue": 54550.09, "totalUnits": 46, "totalReturns": 0, "totalViews": 29109, "totalCarts": 220, "cartRate": 0.76, "conversion": 0.16, "returnRate": 0.0, "aov": 1185.87, "mayRevenue": 16515.3, "junRevenue": 1159.26, "growthMayApr": -7.6, "monthsActive": 5}, {"sku": "FANCL Кальций + Магний", "brand": "FANCL", "totalRevenue": 48401.84, "totalUnits": 63, "totalReturns": 0, "totalViews": 71356, "totalCarts": 439, "cartRate": 0.62, "conversion": 0.09, "returnRate": 0.0, "aov": 768.28, "mayRevenue": 11963.36, "junRevenue": 4465.5, "growthMayApr": 53.1, "monthsActive": 5}, {"sku": "PerfectAstacollagen-guokoulaogenfen-447g", "brand": "Asahi", "totalRevenue": 47859.64, "totalUnits": 11, "totalReturns": 0, "totalViews": 9380, "totalCarts": 53, "cartRate": 0.57, "conversion": 0.12, "returnRate": 0.0, "aov": 4350.88, "mayRevenue": 12710.21, "junRevenue": 8438.23, "growthMayApr": -28.6, "monthsActive": 5}, {"sku": "LACTOFIT-Blue-60", "brand": "Lacto-fit", "totalRevenue": 47446.79, "totalUnits": 24, "totalReturns": 0, "totalViews": 24813, "totalCarts": 117, "cartRate": 0.47, "conversion": 0.1, "returnRate": 0.0, "aov": 1976.95, "mayRevenue": 27352.87, "junRevenue": 1903.85, "growthMayApr": 242.5, "monthsActive": 5}, {"sku": "FANCL-kaluolimite-90tablets", "brand": "FANCL", "totalRevenue": 45859.85, "totalUnits": 32, "totalReturns": 0, "totalViews": 61117, "totalCarts": 338, "cartRate": 0.55, "conversion": 0.05, "returnRate": 0.0, "aov": 1433.12, "mayRevenue": 25192.35, "junRevenue": 1382.6, "growthMayApr": 55.3, "monthsActive": 4}, {"sku": "Centrum Sliver Women 200*2", "brand": "CENTRUM", "totalRevenue": 43717.98, "totalUnits": 9, "totalReturns": 0, "totalViews": 10329, "totalCarts": 30, "cartRate": 0.29, "conversion": 0.09, "returnRate": 0.0, "aov": 4857.55, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": -100.0, "monthsActive": 5}, {"sku": "FANCL-premiumcalorielimit-120capsules", "brand": "FANCL", "totalRevenue": 42837.32, "totalUnits": 9, "totalReturns": 0, "totalViews": 22098, "totalCarts": 116, "cartRate": 0.52, "conversion": 0.04, "returnRate": 0.0, "aov": 4759.7, "mayRevenue": 9004.25, "junRevenue": 4521.2, "growthMayApr": -69.3, "monthsActive": 4}, {"sku": "FANCL-Men-30-Plus-90", "brand": "FANCL", "totalRevenue": 37789.51, "totalUnits": 7, "totalReturns": 0, "totalViews": 2274, "totalCarts": 23, "cartRate": 1.01, "conversion": 0.31, "returnRate": 0.0, "aov": 5398.5, "mayRevenue": 16029.72, "junRevenue": 21759.79, "growthMayApr": 0, "monthsActive": 2}, {"sku": "Asahi-aminoacidmultivitamin-200capsules", "brand": "Asahi", "totalRevenue": 37273.43, "totalUnits": 14, "totalReturns": 0, "totalViews": 9715, "totalCarts": 64, "cartRate": 0.66, "conversion": 0.14, "returnRate": 0.0, "aov": 2662.39, "mayRevenue": 12717.24, "junRevenue": 5179.85, "growthMayApr": 135.1, "monthsActive": 5}, {"sku": "FANCL-Men-50-Plus-90", "brand": "FANCL", "totalRevenue": 36186.69, "totalUnits": 4, "totalReturns": 0, "totalViews": 2397, "totalCarts": 12, "cartRate": 0.5, "conversion": 0.17, "returnRate": 0.0, "aov": 9046.67, "mayRevenue": 0, "junRevenue": 36186.69, "growthMayApr": 0, "monthsActive": 2}, {"sku": "FANCL-niaosuan-support-120capsules", "brand": "FANCL", "totalRevenue": 34919.36, "totalUnits": 11, "totalReturns": 0, "totalViews": 24773, "totalCarts": 113, "cartRate": 0.46, "conversion": 0.04, "returnRate": 0.0, "aov": 3174.49, "mayRevenue": 18517.64, "junRevenue": 0, "growthMayApr": 42.5, "monthsActive": 4}, {"sku": "LACTOFIT-Pink-60*3", "brand": "Lacto-fit", "totalRevenue": 34754.78, "totalUnits": 6, "totalReturns": 0, "totalViews": 9277, "totalCarts": 53, "cartRate": 0.57, "conversion": 0.06, "returnRate": 0.0, "aov": 5792.46, "mayRevenue": 10770.79, "junRevenue": 5431.46, "growthMayApr": 80.4, "monthsActive": 4}, {"sku": "FANCL-Men-60-Plus-90", "brand": "FANCL", "totalRevenue": 30308.14, "totalUnits": 3, "totalReturns": 0, "totalViews": 2718, "totalCarts": 19, "cartRate": 0.7, "conversion": 0.11, "returnRate": 0.0, "aov": 10102.71, "mayRevenue": 0, "junRevenue": 30308.14, "growthMayApr": 0, "monthsActive": 2}, {"sku": "Epios-xiaohuachangdao-2000tablets", "brand": "Asahi", "totalRevenue": 27456.7, "totalUnits": 9, "totalReturns": 0, "totalViews": 9219, "totalCarts": 55, "cartRate": 0.6, "conversion": 0.1, "returnRate": 0.0, "aov": 3050.74, "mayRevenue": 12015.15, "junRevenue": 5934.73, "growthMayApr": 289.8, "monthsActive": 5}, {"sku": "KissMe Long and Curl Mascara", "brand": "KissMe", "totalRevenue": 25909.02, "totalUnits": 33, "totalReturns": 0, "totalViews": 40032, "totalCarts": 278, "cartRate": 0.69, "conversion": 0.08, "returnRate": 0.0, "aov": 785.12, "mayRevenue": 3025.84, "junRevenue": 1512.18, "growthMayApr": -45.5, "monthsActive": 5}, {"sku": "Centrum Sliver men 200*2", "brand": "CENTRUM", "totalRevenue": 23951.74, "totalUnits": 5, "totalReturns": 0, "totalViews": 15414, "totalCarts": 45, "cartRate": 0.29, "conversion": 0.03, "returnRate": 0.0, "aov": 4790.35, "mayRevenue": 9265.99, "junRevenue": 0, "growthMayApr": 92.4, "monthsActive": 5}, {"sku": "DHC-IRON-20", "brand": "DHC", "totalRevenue": 22308.56, "totalUnits": 29, "totalReturns": 0, "totalViews": 24764, "totalCarts": 166, "cartRate": 0.67, "conversion": 0.12, "returnRate": 0.0, "aov": 769.26, "mayRevenue": 3663.38, "junRevenue": 2252.92, "growthMayApr": -47.0, "monthsActive": 5}, {"sku": "DHC-Q10-60", "brand": "DHC", "totalRevenue": 21429.56, "totalUnits": 15, "totalReturns": 0, "totalViews": 11769, "totalCarts": 58, "cartRate": 0.49, "conversion": 0.13, "returnRate": 0.0, "aov": 1428.64, "mayRevenue": 2690.0, "junRevenue": 1363.41, "growthMayApr": 95.5, "monthsActive": 5}, {"sku": "FANCL-dhaepa-150capsules", "brand": "FANCL", "totalRevenue": 17405.55, "totalUnits": 8, "totalReturns": 0, "totalViews": 18643, "totalCarts": 108, "cartRate": 0.58, "conversion": 0.04, "returnRate": 0.0, "aov": 2175.69, "mayRevenue": 8556.15, "junRevenue": 0, "growthMayApr": -3.3, "monthsActive": 4}, {"sku": "DHC-IREN-20", "brand": "DHC", "totalRevenue": 17114.93, "totalUnits": 22, "totalReturns": 0, "totalViews": 19030, "totalCarts": 134, "cartRate": 0.7, "conversion": 0.12, "returnRate": 0.0, "aov": 777.95, "mayRevenue": 2941.56, "junRevenue": 2253.04, "growthMayApr": -4.5, "monthsActive": 5}, {"sku": "EARTH JELLY-cherry-31", "brand": "Earth", "totalRevenue": 17094.86, "totalUnits": 9, "totalReturns": 0, "totalViews": 7396, "totalCarts": 51, "cartRate": 0.69, "conversion": 0.12, "returnRate": 0.0, "aov": 1899.43, "mayRevenue": 5350.2, "junRevenue": 9104.17, "growthMayApr": 102.6, "monthsActive": 3}, {"sku": "DHC-KONTAN-20", "brand": "DHC", "totalRevenue": 16936.13, "totalUnits": 17, "totalReturns": 0, "totalViews": 13269, "totalCarts": 69, "cartRate": 0.52, "conversion": 0.13, "returnRate": 0.0, "aov": 996.24, "mayRevenue": 2934.37, "junRevenue": 2879.56, "growthMayApr": -1.6, "monthsActive": 5}, {"sku": "FANCL-zhongxingzhifangsapote-120capsules", "brand": "FANCL", "totalRevenue": 13242.75, "totalUnits": 6, "totalReturns": 0, "totalViews": 12922, "totalCarts": 66, "cartRate": 0.51, "conversion": 0.05, "returnRate": 0.0, "aov": 2207.12, "mayRevenue": 2186.07, "junRevenue": 4361.21, "growthMayApr": -67.4, "monthsActive": 4}, {"sku": "Foodology+bowel jelly+10pieces", "brand": "foodology", "totalRevenue": 12974.82, "totalUnits": 8, "totalReturns": 0, "totalViews": 20831, "totalCarts": 65, "cartRate": 0.31, "conversion": 0.04, "returnRate": 0.0, "aov": 1621.85, "mayRevenue": 6180.42, "junRevenue": 6794.4, "growthMayApr": 0, "monthsActive": 3}, {"sku": "FANCL-jiaosunianniangluanhuang-60capsules", "brand": "FANCL", "totalRevenue": 12819.97, "totalUnits": 9, "totalReturns": 0, "totalViews": 20879, "totalCarts": 94, "cartRate": 0.45, "conversion": 0.04, "returnRate": 0.0, "aov": 1424.44, "mayRevenue": 5660.38, "junRevenue": 1382.68, "growthMayApr": -2.0, "monthsActive": 4}, {"sku": "Ettusais Eye Edition 6g", "brand": "Ettusais", "totalRevenue": 12747.25, "totalUnits": 21, "totalReturns": 0, "totalViews": 65986, "totalCarts": 262, "cartRate": 0.4, "conversion": 0.03, "returnRate": 0.0, "aov": 607.01, "mayRevenue": 4181.72, "junRevenue": 1799.7, "growthMayApr": 71.0, "monthsActive": 5}, {"sku": "FANCL-kuaichangsapote-60capsules", "brand": "FANCL", "totalRevenue": 12323.12, "totalUnits": 5, "totalReturns": 0, "totalViews": 26476, "totalCarts": 145, "cartRate": 0.55, "conversion": 0.02, "returnRate": 0.0, "aov": 2464.62, "mayRevenue": 0, "junRevenue": 4771.48, "growthMayApr": -100.0, "monthsActive": 4}, {"sku": "ASH-49mineral-400tablets", "brand": "Asahi", "totalRevenue": 12251.97, "totalUnits": 2, "totalReturns": 0, "totalViews": 5093, "totalCarts": 20, "cartRate": 0.39, "conversion": 0.04, "returnRate": 0.0, "aov": 6125.98, "mayRevenue": 12251.97, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "EARTH JELLY-peach-34", "brand": "Earth", "totalRevenue": 12118.07, "totalUnits": 6, "totalReturns": 0, "totalViews": 2135, "totalCarts": 29, "cartRate": 1.36, "conversion": 0.28, "returnRate": 0.0, "aov": 2019.68, "mayRevenue": 2000.44, "junRevenue": 10117.63, "growthMayApr": 0, "monthsActive": 2}, {"sku": "Foodology+centella jelly+10pieces", "brand": "foodology", "totalRevenue": 11576.99, "totalUnits": 7, "totalReturns": 0, "totalViews": 6489, "totalCarts": 28, "cartRate": 0.43, "conversion": 0.11, "returnRate": 0.0, "aov": 1653.86, "mayRevenue": 6452.35, "junRevenue": 5124.64, "growthMayApr": 0, "monthsActive": 3}, {"sku": "DHC-Vitamin B", "brand": "DHC", "totalRevenue": 11536.85, "totalUnits": 15, "totalReturns": 0, "totalViews": 16706, "totalCarts": 99, "cartRate": 0.59, "conversion": 0.09, "returnRate": 0.0, "aov": 769.12, "mayRevenue": 3000.5, "junRevenue": 1488.31, "growthMayApr": 277.2, "monthsActive": 5}, {"sku": "asahi-DHA+EPA-240capsules", "brand": "Asahi", "totalRevenue": 10267.15, "totalUnits": 3, "totalReturns": 0, "totalViews": 4347, "totalCarts": 9, "cartRate": 0.21, "conversion": 0.07, "returnRate": 0.0, "aov": 3422.38, "mayRevenue": 3319.76, "junRevenue": 0, "growthMayApr": -52.2, "monthsActive": 3}, {"sku": "FANCL-xuetangsupport-90tablets", "brand": "FANCL", "totalRevenue": 10039.65, "totalUnits": 6, "totalReturns": 0, "totalViews": 20480, "totalCarts": 97, "cartRate": 0.47, "conversion": 0.03, "returnRate": 0.0, "aov": 1673.27, "mayRevenue": 2874.2, "junRevenue": 0, "growthMayApr": -59.9, "monthsActive": 4}, {"sku": "Fancl Blood Pressure", "brand": "FANCL", "totalRevenue": 9973.04, "totalUnits": 4, "totalReturns": 0, "totalViews": 40845, "totalCarts": 112, "cartRate": 0.27, "conversion": 0.01, "returnRate": 0.0, "aov": 2493.26, "mayRevenue": 0, "junRevenue": 2729.58, "growthMayApr": -100.0, "monthsActive": 5}, {"sku": "asahi-dadouyisoflavone-30tablets", "brand": "Asahi", "totalRevenue": 9384.86, "totalUnits": 5, "totalReturns": 0, "totalViews": 9398, "totalCarts": 43, "cartRate": 0.46, "conversion": 0.05, "returnRate": 0.0, "aov": 1876.97, "mayRevenue": 3803.88, "junRevenue": 3667.55, "growthMayApr": 98.8, "monthsActive": 3}, {"sku": "Inochi no Haha A 420", "brand": "Kobayashi", "totalRevenue": 8918.74, "totalUnits": 3, "totalReturns": 0, "totalViews": 9205, "totalCarts": 62, "cartRate": 0.67, "conversion": 0.03, "returnRate": 0.0, "aov": 2972.91, "mayRevenue": 2965.93, "junRevenue": 2860.93, "growthMayApr": 0, "monthsActive": 5}, {"sku": "DHC-VEGE-60", "brand": "DHC", "totalRevenue": 8879.4, "totalUnits": 5, "totalReturns": 0, "totalViews": 8661, "totalCarts": 58, "cartRate": 0.67, "conversion": 0.06, "returnRate": 0.0, "aov": 1775.88, "mayRevenue": 3397.8, "junRevenue": 1734.26, "growthMayApr": 81.6, "monthsActive": 5}, {"sku": "Asahi-saw-palmetto-120capsules", "brand": "Asahi", "totalRevenue": 8720.14, "totalUnits": 3, "totalReturns": 0, "totalViews": 4509, "totalCarts": 10, "cartRate": 0.22, "conversion": 0.07, "returnRate": 0.0, "aov": 2906.71, "mayRevenue": 2910.8, "junRevenue": 2906.21, "growthMayApr": 0.3, "monthsActive": 3}, {"sku": "FANCL-mianyisupport-30capsules", "brand": "FANCL", "totalRevenue": 7876.82, "totalUnits": 3, "totalReturns": 0, "totalViews": 14604, "totalCarts": 46, "cartRate": 0.31, "conversion": 0.02, "returnRate": 0.0, "aov": 2625.61, "mayRevenue": 2517.8, "junRevenue": 2606.84, "growthMayApr": -8.5, "monthsActive": 4}, {"sku": "Centurm Fish Oil", "brand": "CENTRUM", "totalRevenue": 7682.63, "totalUnits": 3, "totalReturns": 0, "totalViews": 4280, "totalCarts": 18, "cartRate": 0.42, "conversion": 0.07, "returnRate": 0.0, "aov": 2560.88, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": -100.0, "monthsActive": 5}, {"sku": "asahi-dearnatura-yaqian-b1~b6-120tablet", "brand": "Asahi", "totalRevenue": 7287.21, "totalUnits": 5, "totalReturns": 0, "totalViews": 5237, "totalCarts": 22, "cartRate": 0.42, "conversion": 0.1, "returnRate": 0.0, "aov": 1457.44, "mayRevenue": 1369.51, "junRevenue": 1417.94, "growthMayApr": 0, "monthsActive": 5}, {"sku": "DHC-SHOUTUI-20", "brand": "DHC", "totalRevenue": 6973.19, "totalUnits": 7, "totalReturns": 0, "totalViews": 9969, "totalCarts": 60, "cartRate": 0.6, "conversion": 0.07, "returnRate": 0.0, "aov": 996.17, "mayRevenue": 1970.4, "junRevenue": 946.55, "growthMayApr": 101.3, "monthsActive": 5}, {"sku": "FOODOLOGY-CUT PRO-60 cps", "brand": "foodology", "totalRevenue": 6012.12, "totalUnits": 2, "totalReturns": 0, "totalViews": 9817, "totalCarts": 38, "cartRate": 0.39, "conversion": 0.02, "returnRate": 0.0, "aov": 3006.06, "mayRevenue": 6012.12, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Caltrate Basic 200", "brand": "Caltrate", "totalRevenue": 5502.41, "totalUnits": 2, "totalReturns": 0, "totalViews": 1749, "totalCarts": 3, "cartRate": 0.17, "conversion": 0.11, "returnRate": 0.0, "aov": 2751.2, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": -100.0, "monthsActive": 5}, {"sku": "asahinenait240li", "brand": "Asahi", "totalRevenue": 5312.3, "totalUnits": 2, "totalReturns": 0, "totalViews": 12520, "totalCarts": 58, "cartRate": 0.46, "conversion": 0.02, "returnRate": 0.0, "aov": 2656.15, "mayRevenue": 2635.16, "junRevenue": 0, "growthMayApr": -1.6, "monthsActive": 5}, {"sku": "Move Free-Red Advanced-200", "brand": "Move Free", "totalRevenue": 5018.8, "totalUnits": 1, "totalReturns": 0, "totalViews": 1017, "totalCarts": 6, "cartRate": 0.59, "conversion": 0.1, "returnRate": 0.0, "aov": 5018.8, "mayRevenue": 5018.8, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Movefree-Green-120", "brand": "Move Free", "totalRevenue": 4609.61, "totalUnits": 1, "totalReturns": 0, "totalViews": 903, "totalCarts": 5, "cartRate": 0.55, "conversion": 0.11, "returnRate": 0.0, "aov": 4609.61, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": -100.0, "monthsActive": 3}, {"sku": "Caltrate Plus 120", "brand": "Caltrate", "totalRevenue": 4311.22, "totalUnits": 3, "totalReturns": 0, "totalViews": 2561, "totalCarts": 9, "cartRate": 0.35, "conversion": 0.12, "returnRate": 0.0, "aov": 1437.07, "mayRevenue": 0, "junRevenue": 2862.18, "growthMayApr": -100.0, "monthsActive": 5}, {"sku": "Asahi-VBMIX-60tablets", "brand": "Asahi", "totalRevenue": 4288.58, "totalUnits": 4, "totalReturns": 0, "totalViews": 4275, "totalCarts": 19, "cartRate": 0.44, "conversion": 0.09, "returnRate": 0.0, "aov": 1072.14, "mayRevenue": 3211.43, "junRevenue": 1077.15, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Centrum Women 80 CN", "brand": "CENTRUM", "totalRevenue": 4242.35, "totalUnits": 2, "totalReturns": 0, "totalViews": 4670, "totalCarts": 18, "cartRate": 0.39, "conversion": 0.04, "returnRate": 0.0, "aov": 2121.18, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "DHC-EYE-20", "brand": "DHC", "totalRevenue": 3961.02, "totalUnits": 3, "totalReturns": 0, "totalViews": 8066, "totalCarts": 40, "cartRate": 0.5, "conversion": 0.04, "returnRate": 0.0, "aov": 1320.34, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "LACTO-FIT Slim PLUS", "brand": "Lacto-fit", "totalRevenue": 3757.6, "totalUnits": 2, "totalReturns": 0, "totalViews": 4198, "totalCarts": 41, "cartRate": 0.98, "conversion": 0.05, "returnRate": 0.0, "aov": 1878.8, "mayRevenue": 3757.6, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 2}, {"sku": "Puritans Pride CQ10 100mg 240", "brand": "Puritan's Pride", "totalRevenue": 3645.67, "totalUnits": 1, "totalReturns": 0, "totalViews": 570, "totalCarts": 1, "cartRate": 0.18, "conversion": 0.18, "returnRate": 0.0, "aov": 3645.67, "mayRevenue": 3645.67, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "PUDDING UV JELLY SunscreenStick", "brand": "Vlyco", "totalRevenue": 3541.97, "totalUnits": 2, "totalReturns": 0, "totalViews": 15710, "totalCarts": 15, "cartRate": 0.1, "conversion": 0.01, "returnRate": 0.0, "aov": 1770.98, "mayRevenue": 3541.97, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Jamieson WOMEN VITAMIN 90", "brand": "Jamieson", "totalRevenue": 3424.8, "totalUnits": 1, "totalReturns": 0, "totalViews": 1049, "totalCarts": 1, "cartRate": 0.1, "conversion": 0.1, "returnRate": 0.0, "aov": 3424.8, "mayRevenue": 0, "junRevenue": 3424.8, "growthMayApr": 0, "monthsActive": 3}, {"sku": "kyoryoku-wakamoto1000tablets", "brand": "Нет бренда", "totalRevenue": 3203.28, "totalUnits": 1, "totalReturns": 0, "totalViews": 1388, "totalCarts": 3, "cartRate": 0.22, "conversion": 0.07, "returnRate": 0.0, "aov": 3203.28, "mayRevenue": 3203.28, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "L'ilCritters Calcium+D3", "brand": "L'il Critters", "totalRevenue": 3076.14, "totalUnits": 1, "totalReturns": 0, "totalViews": 938, "totalCarts": 4, "cartRate": 0.43, "conversion": 0.11, "returnRate": 0.0, "aov": 3076.14, "mayRevenue": 3076.14, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "KÉRASTASE Gloss Shampoo 250ml", "brand": "Kerastase", "totalRevenue": 2958.11, "totalUnits": 1, "totalReturns": 0, "totalViews": 5006, "totalCarts": 17, "cartRate": 0.34, "conversion": 0.02, "returnRate": 0.0, "aov": 2958.11, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": -100.0, "monthsActive": 5}, {"sku": "Swisse Calcium mini 300", "brand": "Swisse", "totalRevenue": 2940.42, "totalUnits": 1, "totalReturns": 0, "totalViews": 1119, "totalCarts": 4, "cartRate": 0.36, "conversion": 0.09, "returnRate": 0.0, "aov": 2940.42, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": -100.0, "monthsActive": 3}, {"sku": "Eunova-b12plus-10bottles", "brand": "Stada", "totalRevenue": 2934.05, "totalUnits": 1, "totalReturns": 0, "totalViews": 1939, "totalCarts": 10, "cartRate": 0.52, "conversion": 0.05, "returnRate": 0.0, "aov": 2934.05, "mayRevenue": 0, "junRevenue": 2934.05, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Puritans Pride MSM 240", "brand": "Puritan's Pride", "totalRevenue": 2770.45, "totalUnits": 1, "totalReturns": 0, "totalViews": 1394, "totalCarts": 8, "cartRate": 0.57, "conversion": 0.07, "returnRate": 0.0, "aov": 2770.45, "mayRevenue": 0, "junRevenue": 2770.45, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Jamieson Vitamin C", "brand": "Jamieson", "totalRevenue": 2514.32, "totalUnits": 1, "totalReturns": 0, "totalViews": 926, "totalCarts": 1, "cartRate": 0.11, "conversion": 0.11, "returnRate": 0.0, "aov": 2514.32, "mayRevenue": 2514.32, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Centrum Men 40 China Version", "brand": "CENTRUM", "totalRevenue": 2209.4, "totalUnits": 2, "totalReturns": 0, "totalViews": 7838, "totalCarts": 23, "cartRate": 0.29, "conversion": 0.03, "returnRate": 0.0, "aov": 1104.7, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "Centrum Men 80 China Version", "brand": "CENTRUM", "totalRevenue": 1897.17, "totalUnits": 1, "totalReturns": 0, "totalViews": 2872, "totalCarts": 9, "cartRate": 0.31, "conversion": 0.03, "returnRate": 0.0, "aov": 1897.17, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": -100.0, "monthsActive": 5}, {"sku": "Kate Lip Tint 01", "brand": "Kate", "totalRevenue": 1882.37, "totalUnits": 3, "totalReturns": 0, "totalViews": 12228, "totalCarts": 19, "cartRate": 0.16, "conversion": 0.02, "returnRate": 0.0, "aov": 627.46, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": -100.0, "monthsActive": 5}, {"sku": "EARTH JELLY-grape-15", "brand": "Earth", "totalRevenue": 1781.08, "totalUnits": 1, "totalReturns": 0, "totalViews": 1716, "totalCarts": 10, "cartRate": 0.58, "conversion": 0.06, "returnRate": 0.0, "aov": 1781.08, "mayRevenue": 1781.08, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 2}, {"sku": "Caltrate 120", "brand": "Caltrate", "totalRevenue": 1614.55, "totalUnits": 1, "totalReturns": 0, "totalViews": 2760, "totalCarts": 9, "cartRate": 0.33, "conversion": 0.04, "returnRate": 0.0, "aov": 1614.55, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "DHC-VC-60", "brand": "DHC", "totalRevenue": 1492.98, "totalUnits": 2, "totalReturns": 0, "totalViews": 6676, "totalCarts": 36, "cartRate": 0.54, "conversion": 0.03, "returnRate": 0.0, "aov": 746.49, "mayRevenue": 0, "junRevenue": 733.41, "growthMayApr": -100.0, "monthsActive": 5}, {"sku": "3CE-Lipstick-BitterHour-3.5g", "brand": "3ce", "totalRevenue": 1459.36, "totalUnits": 1, "totalReturns": 0, "totalViews": 1246, "totalCarts": 2, "cartRate": 0.16, "conversion": 0.08, "returnRate": 0.0, "aov": 1459.36, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": -100.0, "monthsActive": 4}, {"sku": "Centrum 60 China Version", "brand": "CENTRUM", "totalRevenue": 1335.65, "totalUnits": 1, "totalReturns": 0, "totalViews": 4453, "totalCarts": 8, "cartRate": 0.18, "conversion": 0.02, "returnRate": 0.0, "aov": 1335.65, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "Asahi-dearnatura-vitamine-60tablets", "brand": "Asahi", "totalRevenue": 1276.15, "totalUnits": 1, "totalReturns": 0, "totalViews": 3079, "totalCarts": 8, "cartRate": 0.26, "conversion": 0.03, "returnRate": 0.0, "aov": 1276.15, "mayRevenue": 0, "junRevenue": 1276.15, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Kate Lip Tint 04", "brand": "Kate", "totalRevenue": 1258.81, "totalUnits": 2, "totalReturns": 0, "totalViews": 11862, "totalCarts": 16, "cartRate": 0.13, "conversion": 0.02, "returnRate": 0.0, "aov": 629.4, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": -100.0, "monthsActive": 5}, {"sku": "EARTH JELLY-peach-7", "brand": "Earth", "totalRevenue": 937.59, "totalUnits": 1, "totalReturns": 0, "totalViews": 1294, "totalCarts": 8, "cartRate": 0.62, "conversion": 0.08, "returnRate": 0.0, "aov": 937.59, "mayRevenue": 937.59, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 2}, {"sku": "Centrum Gummy Women 100", "brand": "CENTRUM", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1496, "totalCarts": 6, "cartRate": 0.4, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "Centrum 30 CN", "brand": "CENTRUM", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 5042, "totalCarts": 4, "cartRate": 0.08, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "KÉRASTASE Gloss Insta Glaze 250ml", "brand": "Kerastase", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 3271, "totalCarts": 9, "cartRate": 0.28, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "KÉRASTASE Gloss Huile Incroyable 45ml", "brand": "Kerastase", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 3990, "totalCarts": 12, "cartRate": 0.3, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "KÉRASTASE Gloss Shampoo 500ml", "brand": "Kerastase", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 3287, "totalCarts": 5, "cartRate": 0.15, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "GUCCI lipstick satin 25", "brand": "Gucci", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1441, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "Gucci lipstick satin 208", "brand": "Gucci", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1405, "totalCarts": 1, "cartRate": 0.07, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "GUCCI liquid matte lipstick 208", "brand": "Gucci", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1462, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "GUCCI liquid matte lipstick 505", "brand": "Gucci", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1719, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "Gucci Brillant lipstick 25", "brand": "Gucci", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1873, "totalCarts": 4, "cartRate": 0.21, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "Gucci matte lipstick 308", "brand": "Gucci", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1414, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "3CE-Lipstick-CashmereNude-3.5g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1033, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 5}, {"sku": "kaminomoto-conditioner", "brand": "Kaminomoto", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1054, "totalCarts": 4, "cartRate": 0.38, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Jamieson Vitamin A", "brand": "Jamieson", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 882, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Vitafusion-women-gummy", "brand": "vitafusion", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1006, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "JS Lycopene", "brand": "Jamieson", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 539, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Jamieson Lutein 45", "brand": "Jamieson", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 767, "totalCarts": 3, "cartRate": 0.39, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Jamieson Vitamin B100", "brand": "Jamieson", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 948, "totalCarts": 1, "cartRate": 0.11, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Puritan Lutein", "brand": "Puritan's Pride", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 715, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Puritans Pride CQ10 200mg 240", "brand": "Puritan's Pride", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 451, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Puritans Pride CQ10 100mg 120", "brand": "Puritan's Pride", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 610, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "OLLY GUMMY MEN 90", "brand": "OLLY", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 895, "totalCarts": 2, "cartRate": 0.22, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Jamieson Calcium Magnesium", "brand": "Jamieson", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 689, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "3CE-Lipstick-SpeakUp-3.5g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1307, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Lipstick-WalkTalk-3.5g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1217, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Lipstick-Playoff-3.5g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1076, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Lipstick-Weekender-3.5g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1089, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Lipstick-Laydown-3.5g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1343, "totalCarts": 1, "cartRate": 0.07, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Lipstick-Definition-3.5g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1088, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Lipstick-Taupe-3.5g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1194, "totalCarts": 1, "cartRate": 0.08, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-LipTint-CasualAffair-5g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1270, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Lipstick-Neat-3.5g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 2280, "totalCarts": 8, "cartRate": 0.35, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-LipTint-BAKEBEIGE-4.6g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1531, "totalCarts": 3, "cartRate": 0.2, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Eyeshadow-SMOOTHER-9g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1375, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Eyeshadow-DryBouquet-8.5g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1321, "totalCarts": 1, "cartRate": 0.08, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Eyeshadow-Pink-8.5g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1090, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Eyeshadow-DDearnude-9g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1052, "totalCarts": 1, "cartRate": 0.1, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Eyeshadow-DiamondGlint-3.2g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1387, "totalCarts": 1, "cartRate": 0.07, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Eyeshadow-BeachMuse-9g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1550, "totalCarts": 2, "cartRate": 0.13, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-FacePalette-A-8g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 3184, "totalCarts": 8, "cartRate": 0.25, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Eyeshadow-ShyAsh-9g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1734, "totalCarts": 5, "cartRate": 0.29, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Eyeshadow-AutoFocus-8.5g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1335, "totalCarts": 1, "cartRate": 0.07, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "3CE-Eyeshadow-MoodOverTake-8.1g", "brand": "3ce", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 887, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "FLORASIS-Ремонт-01-10.8g", "brand": "Florasis", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 6934, "totalCarts": 41, "cartRate": 0.59, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "HXZ-SPF-Z25", "brand": "Florasis", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 5530, "totalCarts": 18, "cartRate": 0.33, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "HXZ-MB-07", "brand": "Florasis", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 4764, "totalCarts": 8, "cartRate": 0.17, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "HXZ-SPF-Z20", "brand": "Florasis", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 3696, "totalCarts": 13, "cartRate": 0.35, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 4}, {"sku": "HXZ-FD-L15", "brand": "Florasis", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 2521, "totalCarts": 4, "cartRate": 0.16, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "HXZ-FD-N15", "brand": "Florasis", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1204, "totalCarts": 2, "cartRate": 0.17, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "HXZ-FD-Z25", "brand": "Florasis", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1274, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "HXZ-FD-L20", "brand": "Florasis", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1217, "totalCarts": 1, "cartRate": 0.08, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "HXZ-FD-N20", "brand": "Florasis", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1789, "totalCarts": 1, "cartRate": 0.06, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "HXZ-MB-06(1)", "brand": "Florasis", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 2785, "totalCarts": 3, "cartRate": 0.11, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "HXZ-MB-04(1)", "brand": "Florasis", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1653, "totalCarts": 2, "cartRate": 0.12, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "HXZ-MB-02(1)", "brand": "Florasis", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 2200, "totalCarts": 3, "cartRate": 0.14, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Eunova-b12plus-30bottles", "brand": "Stada", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1413, "totalCarts": 8, "cartRate": 0.57, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "YUHADA Pear Watery Sunscreen", "brand": "YUHADA", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 984, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "Asahi-Blueberry-Lutein-60tablets", "brand": "Asahi", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 3169, "totalCarts": 9, "cartRate": 0.28, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "ASAHI-dianachurastrong39ammino-300tablets", "brand": "Asahi", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 3014, "totalCarts": 9, "cartRate": 0.3, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "VLYCO BNS MASK", "brand": "Vlyco", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1769, "totalCarts": 2, "cartRate": 0.11, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "YUHADA jixuecao MP", "brand": "YUHADA", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 3037, "totalCarts": 1, "cartRate": 0.03, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 3}, {"sku": "MG-PSTRIKE-GS-001", "brand": "BANDAI SPIRITS", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 409, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 2}, {"sku": "EARTH JELLY-pineapple-15", "brand": "Earth", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1674, "totalCarts": 11, "cartRate": 0.66, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 2}, {"sku": "Earth-Berries-7", "brand": "Earth", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1197, "totalCarts": 2, "cartRate": 0.17, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 2}, {"sku": "EARTH JELLY-cherry-7", "brand": "Earth", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1788, "totalCarts": 4, "cartRate": 0.22, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 2}, {"sku": "Earth-Mango-7", "brand": "Earth", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 1509, "totalCarts": 3, "cartRate": 0.2, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 2}, {"sku": "VLYCO BNS MASK-5", "brand": "Vlyco", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 293, "totalCarts": 1, "cartRate": 0.34, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 2}, {"sku": "FANCL-NAIJIPIAN-HUGAN", "brand": "FANCL", "totalRevenue": 0, "totalUnits": 0, "totalReturns": 0, "totalViews": 5, "totalCarts": 0, "cartRate": 0.0, "conversion": 0.0, "returnRate": 0, "aov": 0, "mayRevenue": 0, "junRevenue": 0, "growthMayApr": 0, "monthsActive": 1}]};
+
+const months = D.months;
+const colors = ['#6c8cff','#ff6b6b','#ffb86c','#51cf66','#cc5de8','#20c997','#fcc419','#ff922b','#748ffc','#e599f7'];
+const fm = x => x.toLocaleString('ru-RU', {minimumFractionDigits:2});
+const fi = x => x.toLocaleString();
+const f1 = x => x.toFixed(1);
+
+document.getElementById('tabHeaders').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+});
+
+// TAB 1: Overview
+function renderOverview() {
+  const mt = D.monthlyTrend;
+  const totalR = mt.reduce((s,m) => s + m.revenue, 0);
+  const totalU = mt.reduce((s,m) => s + m.units, 0);
+  const totalV = mt.reduce((s,m) => s + m.views, 0);
+  const totalC = mt.reduce((s,m) => s + m.carts, 0);
+  const totalRt = mt.reduce((s,m) => s + m.returns, 0);
+  document.getElementById('overviewStats').innerHTML =
+    '<div class="stat-card"><div class="label">2-6月总销售额</div><div class="value">₽'+fm(totalR)+'</div><div class="sub"></div></div>'+
+    '<div class="stat-card"><div class="label">总销量</div><div class="value">'+fi(totalU)+'</div><div class="sub">件</div></div>'+
+    '<div class="stat-card"><div class="label">展现量</div><div class="value">'+fi(totalV)+'</div><div class="sub">次</div></div>'+
+    '<div class="stat-card"><div class="label">加购率</div><div class="value">'+f1(totalC/totalV*100)+'%</div><div class="sub"></div></div>'+
+    '<div class="stat-card"><div class="label">转化率</div><div class="value">'+(totalU/totalV*100).toFixed(3)+'%</div><div class="sub"></div></div>'+
+    '<div class="stat-card"><div class="label">退换率</div><div class="value">'+f1(totalRt/totalU*100)+'%</div><div class="sub"></div></div>'+
+    '<div class="stat-card"><div class="label">5月销售额</div><div class="value">₽'+fm(mt[3].revenue)+'</div><div class="sub"></div></div>'+
+    '<div class="stat-card"><div class="label">6月(11天)</div><div class="value">₽'+fm(mt[4].revenue)+'</div><div class="sub">进行中</div></div>';
+
+  const topB = D.brandRanking[0];
+  const fastest = D.brandRanking.reduce((a,b) => a.growth > b.growth ? a : b);
+  const slowest = D.brandRanking.reduce((a,b) => a.growth < b.growth ? a : b);
+  document.getElementById('coreInsights').innerHTML =
+    '<li><strong>总销售额:</strong> ₽'+fm(totalR)+'（2-6月累计），峰值在3月（₽'+fm(mt[1].revenue)+'），之后连续下滑</li>'+
+    '<li><strong>增长最快:</strong> '+fastest.brand+'（'+f1(fastest.growth)+'%）</li>'+
+    '<li><strong>下滑最严重:</strong> '+slowest.brand+'（'+f1(slowest.growth)+'%）</li>'+
+    '<li><strong>加购率趋势:</strong> '+mt.map(m=>m.month+' '+f1(m.cartRate)+'%').join(' → ')+'，逐月下降</li>'+
+    '<li><strong>转化率趋势:</strong> '+mt.map(m=>m.month+' '+f1(m.conversion)+'%').join(' → ')+'</li>'+
+    '<li><strong>Top品牌:</strong> '+topB.brand+' 占总收入 '+f1(topB.totalRevenue/totalR*100)+'%（₽'+fm(topB.totalRevenue)+'）</li>';
+
+  new Chart(document.getElementById('ovTrendChart').getContext('2d'), {
+    type:'line',
+    data:{labels:mt.map(m=>m.month),
+      datasets:[
+        {label:'销售额(₽)',data:mt.map(m=>m.revenue),borderColor:'#6c8cff',backgroundColor:'rgba(108,140,255,0.1)',fill:true,tension:.3,yAxisID:'y',pointRadius:4},
+        {label:'展现量',data:mt.map(m=>m.views),borderColor:'#51cf66',tension:.3,yAxisID:'y1',pointRadius:3,borderDash:[4,4]},
+        {label:'加购率(%)',data:mt.map(m=>m.cartRate),borderColor:'#ffb86c',tension:.3,yAxisID:'y2',pointRadius:3,borderWidth:2},
+        {label:'转化率(%)',data:mt.map(m=>m.conversion),borderColor:'#cc5de8',tension:.3,yAxisID:'y2',pointRadius:3,borderWidth:2,borderDash:[4,4]}
+      ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{color:'#888',usePointStyle:true,padding:12}}},
+      scales:{
+        x:{ticks:{color:'#666'},grid:{color:'#22222e'}},
+        y:{type:'linear',position:'left',ticks:{color:'#888',callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'#22222e'}},
+        y1:{type:'linear',position:'right',grid:{display:false},ticks:{color:'#51cf66',callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':v}},
+        y2:{type:'linear',position:'right',grid:{display:false},ticks:{color:'#888',callback:v=>v.toFixed(1)+'%'}}
+      }
+    }
+  });
+
+  const top8 = D.brandRanking.slice(0,8);
+  new Chart(document.getElementById('ovBrandPie').getContext('2d'), {
+    type:'doughnut',
+    data:{labels:top8.map(b=>b.brand),datasets:[{data:top8.map(b=>b.totalRevenue),backgroundColor:colors.slice(0,8),borderWidth:0}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'right',labels:{color:'#888',padding:8,font:{size:11}}},
+        tooltip:{backgroundColor:'#1a1a24',titleColor:'#e0e0e0',bodyColor:'#ccc',borderColor:'#2a2a3a',borderWidth:1,
+          callbacks:{label:ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);return ctx.label+': ₽'+(+ctx.parsed).toLocaleString()+' ('+(+ctx.parsed/t*100).toFixed(1)+'%)'}}}
+      }
+    }
+  });
+
+  const top5 = D.brandRanking.slice(0,5);
+  const bm={};top5.forEach(b=>{bm[b.brand]={};b.monthly.forEach(m=>{bm[b.brand][m.month]=m.revenue})});
+  new Chart(document.getElementById('ovBrandTrend').getContext('2d'), {
+    type:'line',
+    data:{labels:months,datasets:top5.map((b,i)=>({label:b.brand,data:months.map(m=>bm[b.brand][m]||0),borderColor:colors[i],tension:.3,pointRadius:3}))},
+    options:{
+      responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{color:'#888',usePointStyle:true,padding:10}}},
+      scales:{x:{ticks:{color:'#666'},grid:{color:'#22222e'}},y:{ticks:{color:'#888',callback:v=>v>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'#22222e'}}}
+    }
+  });
+}
+
+// TAB 2: Brands
+let selBrand = null;
+function renderBrands() {
+  const tags = document.getElementById('brandFilterTags');
+  const allB = D.brandRanking.map(b=>b.brand);
+  tags.innerHTML = '<button class="brand-tag active" data-brand="all">全部</button>'+allB.map(b=>'<button class="brand-tag" data-brand="'+b+'">'+b+'</button>').join('');
+  tags.addEventListener('click',e=>{const btn=e.target.closest('.brand-tag');if(!btn)return;tags.querySelectorAll('.brand-tag').forEach(t=>t.classList.remove('active'));btn.classList.add('active');selBrand=btn.dataset.brand==='all'?null:btn.dataset.brand;renderBrandCards();});
+  renderBrandCards();
+}
+
+function renderBrandCards() {
+  let brands = D.brandRanking;
+  if(selBrand) brands=brands.filter(b=>b.brand===selBrand);
+  document.getElementById('brandDetails').innerHTML = brands.map(b=>{
+    const m=b.monthly,lastM=m[m.length-1],prevM=m.length>=2?m[m.length-2]:null;
+    const moM=prevM?((lastM.revenue-prevM.revenue)/prevM.revenue*100).toFixed(1):'—';
+    return '<div class="chart-card" style="margin-bottom:12px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">'+
+        '<span style="font-size:16px;font-weight:600;color:#fff">'+b.brand+'</span>'+
+        '<span style="font-size:12px;color:#888">₽'+fm(b.totalRevenue)+' | 📦'+fi(b.totalUnits)+'件 | 👁'+fi(b.totalViews)+'次</span>'+
+      '</div>'+
+      '<div style="display:flex;gap:16px;margin-bottom:8px;font-size:12px;color:#888;flex-wrap:wrap">'+
+        '<span>加购率: <b style="color:#e0e0e0">'+f1(b.cartRate)+'%</b></span>'+
+        '<span>转化率: <b style="color:#e0e0e0">'+f1(b.conversion)+'%</b></span>'+
+        '<span>退换率: <b style="color:#e0e0e0">'+f1(b.returnRate)+'%</b></span>'+
+        '<span>2→5月增长: <b class="'+(b.growth>=0?'green':'red')+'">'+(b.growth>=0?'+':'')+f1(b.growth)+'%</b></span>'+
+        '<span>环比: <b class="'+(moM>=0?'green':'red')+'">'+(moM>=0?'+':'')+moM+'%</b></span>'+
+      '</div>'+
+      '<div style="aspect-ratio:4;max-height:100px"><canvas id="bc_'+b.brand.replace(/[^a-z0-9]/gi,'_')+'"></canvas></div>'+
+    '</div>';
+  }).join('');
+
+  brands.forEach(b=>{
+    const el=document.getElementById('bc_'+b.brand.replace(/[^a-z0-9]/gi,'_'));if(!el)return;
+    new Chart(el.getContext('2d'),{type:'line',data:{labels:b.monthly.map(m=>m.month),datasets:[{label:'销售额',data:b.monthly.map(m=>m.revenue),borderColor:'#6c8cff',backgroundColor:'rgba(108,140,255,0.1)',fill:true,tension:.3,pointRadius:2,borderWidth:1.5},{label:'加购率(%)',data:b.monthly.map(m=>m.cartRate||0),borderColor:'#51cf66',borderDash:[3,3],tension:.3,pointRadius:2,borderWidth:1,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#666',font:{size:10}},grid:{display:false}},y:{ticks:{color:'#888',font:{size:9},callback:v=>v>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'#22222e'}},y1:{position:'right',grid:{display:false},ticks:{color:'#51cf66',font:{size:9},callback:v=>v.toFixed(1)+'%'}}}});
+  });
+}
+
+// TAB 3: Growth
+function renderGrowth() {
+  const sb=[...D.brandRanking].filter(b=>b.growth!==0&&b.totalRevenue>50000).sort((a,b)=>a.growth-b.growth);
+  new Chart(document.getElementById('gBrandRank').getContext('2d'),{type:'bar',data:{labels:sb.map(b=>b.brand),datasets:[{label:'2→5月增长率(%)',data:sb.map(b=>b.growth),backgroundColor:sb.map(b=>b.growth>=0?'rgba(81,207,102,0.8)':'rgba(255,107,107,0.8)'),borderRadius:4,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#888',callback:v=>v.toFixed(0)+'%'},grid:{color:'#22222e'}},y:{ticks:{color:'#888',font:{size:10}},grid:{display:false}}}});
+  const gn=D.skuGrowthLeaders.filter(s=>s.sku!=='unknown').slice(0,10);
+  new Chart(document.getElementById('gSkuGainers').getContext('2d'),{type:'bar',data:{labels:gn.map(s=>s.sku),datasets:[{label:'4月收入',data:gn.map(s=>s.aprRevenue),backgroundColor:'#6c8cff',borderRadius:3,borderSkipped:false},{label:'5月收入',data:gn.map(s=>s.mayRevenue),backgroundColor:'#51cf66',borderRadius:3,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{labels:{color:'#888',usePointStyle:true,padding:10}}},scales:{x:{ticks:{color:'#888',callback:v=>v>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'#22222e'}},y:{ticks:{color:'#888',font:{size:9}},grid:{display:false}}}});
+  const fl=D.skuGrowthFallers.filter(s=>s.sku!=='unknown').slice(0,10);
+  new Chart(document.getElementById('gSkuLosers').getContext('2d'),{type:'bar',data:{labels:fl.map(s=>s.sku),datasets:[{label:'4月收入',data:fl.map(s=>s.aprRevenue),backgroundColor:'#6c8cff',borderRadius:3,borderSkipped:false},{label:'5月收入',data:fl.map(s=>s.mayRevenue),backgroundColor:'#ff6b6b',borderRadius:3,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{labels:{color:'#888',usePointStyle:true,padding:10}}},scales:{x:{ticks:{color:'#888',callback:v=>v>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'#22222e'}},y:{ticks:{color:'#888',font:{size:9}},grid:{display:false}}}});
+  const ib=D.brandRanking.filter(b=>b.monthly[0]&&b.monthly[0].revenue>0&&b.totalRevenue>30000).slice(0,6);
+  new Chart(document.getElementById('gBrandIndex').getContext('2d'),{type:'line',data:{labels:months,datasets:ib.map((b,i)=>{const base=b.monthly[0].revenue||1;return{label:b.brand,data:months.map(m=>{const f=b.monthly.find(x=>x.month===m);return f?f.revenue/base*100:null}),borderColor:colors[i],tension:.3,pointRadius:3,spanGaps:true,fill:false}})},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#888',usePointStyle:true,padding:10}}},scales:{x:{ticks:{color:'#666'},grid:{color:'#22222e'}},y:{ticks:{color:'#888',callback:v=>v.toFixed(0)+'%'},grid:{color:'#22222e'}}}});
+}
+
+// TAB 4: SKU Table
+function renderSkuTable() {
+  const bf=document.getElementById('skuBrandFilter');
+  if(bf.options.length<=1){const brands=[...new Set(D.allSkuDetails.map(s=>s.brand))].sort();brands.forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;bf.appendChild(o);});}
+  let data=[...D.allSkuDetails];
+  const bfv=bf.value;if(bfv!=='all')data=data.filter(s=>s.brand===bfv);
+  const q=document.getElementById('skuSearchFilter').value.trim().toLowerCase();if(q)data=data.filter(s=>s.sku.toLowerCase().includes(q));
+  const sortBy=document.getElementById('skuSortFilter').value;
+  const order={revenue:'totalRevenue',units:'totalUnits',views:'totalViews',growth:'growthMayApr',conversion:'conversion',cartRate:'cartRate'};
+  const field=order[sortBy]||'totalRevenue';
+  data.sort((a,b)=>b[field]-a[field]);
+  document.getElementById('skuDetailTable').innerHTML=data.map(s=>{
+    const g=s.growthMayApr;
+    return '<tr><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">'+s.sku+'</td><td>'+s.brand+'</td>'+
+      '<td class="text-right">₽'+fm(s.totalRevenue)+'</td><td class="text-right">'+fi(s.totalUnits)+'</td>'+
+      '<td class="text-right">'+fi(s.totalViews)+'</td><td class="text-right">'+f1(s.cartRate)+'%</td>'+
+      '<td class="text-right">'+f1(s.conversion)+'%</td><td class="text-right">'+f1(s.returnRate)+'%</td>'+
+      '<td class="text-right">₽'+fm(s.aov)+'</td><td class="text-right">₽'+fm(s.mayRevenue)+'</td>'+
+      '<td class="text-right">₽'+fm(s.junRevenue)+'</td>'+
+      '<td class="text-right"><span class="'+(g>=0?'green':'red')+'">'+(g>=0?'+':'')+f1(g)+'%</span></td>'+
+      '<td class="text-right">'+s.monthsActive+'</td></tr>';
+  }).join('');
+  document.getElementById('skuCount').textContent=data.length+' 条记录';
+}
+
+document.getElementById('skuBrandFilter').addEventListener('change',renderSkuTable);
+document.getElementById('skuSearchFilter').addEventListener('input',renderSkuTable);
+document.getElementById('skuSortFilter').addEventListener('change',renderSkuTable);
+
+renderOverview();renderBrands();renderGrowth();renderSkuTable();
+</script>
+</body>
+</html>
