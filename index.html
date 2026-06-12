@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ozon 销售仪表板</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0f0f13;
+  color: #e0e0e0;
+  padding: 20px;
+}
+.header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+}
+.header h1 { font-size: 24px; font-weight: 600; color: #fff; }
+.header h1 span { color: #6c8cff; }
+.last-update { font-size: 13px; color: #888; }
+
+/* Filters */
+.filters {
+  display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.filter-group {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.filter-group label { font-size: 12px; color: #888; font-weight: 500; }
+.filter-group select, .filter-group input {
+  background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 8px;
+  padding: 8px 12px; color: #e0e0e0; font-size: 13px; min-width: 160px;
+  outline: none; transition: border 0.2s;
+}
+.filter-group select:focus, .filter-group input:focus { border-color: #6c8cff; }
+
+/* Stats Cards */
+.stats-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px; margin-bottom: 24px;
+}
+.stat-card {
+  background: #1a1a24; border-radius: 12px; padding: 16px;
+  border: 1px solid #2a2a3a;
+}
+.stat-card .label { font-size: 12px; color: #888; margin-bottom: 4px; }
+.stat-card .value { font-size: 22px; font-weight: 600; color: #fff; }
+.stat-card .sub { font-size: 12px; color: #666; margin-top: 2px; }
+
+/* Charts Grid */
+.charts-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin-bottom: 24px;
+}
+.chart-card {
+  background: #1a1a24; border-radius: 12px; padding: 20px;
+  border: 1px solid #2a2a3a;
+}
+.chart-card.full { grid-column: 1 / -1; }
+.chart-card h3 { font-size: 14px; color: #aaa; margin-bottom: 12px; font-weight: 500; }
+.chart-card canvas { max-height: 320px; height: 320px; width: 100% !important; }
+
+/* SKU Table */
+.sku-table-wrap {
+  background: #1a1a24; border-radius: 12px; border: 1px solid #2a2a3a;
+  overflow: hidden;
+}
+.sku-table-wrap h3 {
+  font-size: 14px; color: #aaa; font-weight: 500;
+  padding: 16px 20px 0;
+}
+.table-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 20px; flex-wrap: wrap; gap: 8px;
+}
+.table-search input {
+  background: #0f0f13; border: 1px solid #2a2a3a; border-radius: 6px;
+  padding: 6px 10px; color: #e0e0e0; font-size: 13px; width: 200px; outline: none;
+}
+.table-search input:focus { border-color: #6c8cff; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  background: #14141e; color: #888; font-weight: 500;
+  padding: 10px 12px; text-align: left; position: sticky; top: 0; cursor: pointer; user-select: none;
+  white-space: nowrap;
+}
+th:hover { color: #ccc; }
+th .sort-icon { margin-left: 4px; font-size: 10px; color: #555; }
+th.sorted .sort-icon { color: #6c8cff; }
+td { padding: 8px 12px; border-top: 1px solid #22222e; }
+tr:hover td { background: #1e1e2c; }
+.sku-name { font-weight: 500; color: #ddd; }
+
+.pagination {
+  display: flex; justify-content: center; align-items: center;
+  padding: 16px; gap: 12px;
+}
+.pagination button {
+  background: #2a2a3a; border: none; border-radius: 6px;
+  padding: 6px 14px; color: #ccc; cursor: pointer; font-size: 13px;
+}
+.pagination button:hover { background: #3a3a4e; }
+.pagination button:disabled { opacity: 0.3; cursor: default; }
+.pagination span { font-size: 13px; color: #888; }
+
+/* Tabs for chart area */
+.tabs { display: flex; gap: 0; margin-bottom: 16px; }
+.tab-btn {
+  background: transparent; border: none; padding: 8px 18px;
+  color: #666; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.tab-btn.active { color: #6c8cff; border-bottom-color: #6c8cff; }
+.tab-btn:hover { color: #aaa; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .charts-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 <span>Ozon</span> 销售仪表板</h1>
+  <div class="last-update" id="lastUpdate"></div>
+</div>
+
+<div class="filters">
+  <div class="filter-group">
+    <label>月份</label>
+    <select id="monthFilter">
+      <option value="all">全部月份</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>品牌</label>
+    <select id="brandFilter">
+      <option value="all">全部品牌</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>搜索 offer_id</label>
+    <input type="text" id="skuSearch" placeholder="输入 offer_id...">
+  </div>
+  <div class="filter-group">
+    <label>排序</label>
+    <select id="sortBy">
+      <option value="revenue">销售额 ↓</option>
+      <option value="units">销量 ↓</option>
+      <option value="returns">退货数 ↓</option>
+      <option value="name">名称 ↑</option>
+    </select>
+  </div>
+</div>
+
+<div class="stats-row" id="statsRow">
+  <div class="stat-card"><div class="label">总销售额</div><div class="value" id="statRevenue">—</div><div class="sub">₽</div></div>
+  <div class="stat-card"><div class="label">总销量</div><div class="value" id="statUnits">—</div><div class="sub">件</div></div>
+  <div class="stat-card"><div class="label">活跃 SKU</div><div class="value" id="statSku">—</div><div class="sub">有销量</div></div>
+  <div class="stat-card"><div class="label">退货率</div><div class="value" id="statReturnRate">—</div><div class="sub">%</div></div>
+  <div class="stat-card"><div class="label">平均客单价</div><div class="value" id="statAov">—</div><div class="sub">₽</div></div>
+  <div class="stat-card"><div class="label">总加购率</div><div class="value" id="statCartRate">—</div><div class="sub">%</div></div>
+</div>
+
+<div class="charts-grid">
+  <div class="chart-card full">
+    <h3>📈 月度销售趋势</h3>
+    <canvas id="trendChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>🥧 品牌占比</h3>
+    <canvas id="brandChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>🔥 Top SKU 销售额</h3>
+    <canvas id="topSkuChart"></canvas>
+  </div>
+</div>
+
+<div class="sku-table-wrap" id="skuTableWrap">
+  <h3>📋 SKU 明细</h3>
+  <div class="table-header">
+    <div class="table-search">
+      <input type="text" id="tableSearch" placeholder="搜索 offer_id 或品牌...">
+    </div>
+    <span id="tableCount" style="font-size:13px;color:#888;"></span>
+  </div>
+  <div style="max-height:500px;overflow-y:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th data-col="offer_id" class="sorted">offer_id <span class="sort-icon">▲</span></th>
+          <th data-col="brand">品牌</th>
+          <th data-col="revenue" class="sorted" style="text-align:right;">销售额 <span class="sort-icon">▼</span></th>
+          <th data-col="units" style="text-align:right;">销量</th>
+          <th data-col="returns" style="text-align:right;">退货</th>
+          <th data-col="return_rate" style="text-align:right;">退货率</th>
+          <th data-col="avg_price" style="text-align:right;">均价</th>
+          <th data-col="cart_rate" style="text-align:right;">加购率</th>
+          <th data-col="conversion" style="text-align:right;">转化率</th>
+        </tr>
+      </thead>
+      <tbody id="skuTableBody"></tbody>
+    </table>
+  </div>
+  <div class="pagination">
+    <button id="prevPage" disabled>← 上一页</button>
+    <span id="pageInfo">1 / 1</span>
+    <button id="nextPage" disabled>下一页 →</button>
+  </div>
+</div>
+
+<script>
+const DB_URL = 'data.json';
+
+let allData = [];
+let rawData = [];
+let chartInstances = {};
+const PAGE_SIZE = 20;
+let currentPage = 1;
+
+// ── Load data ──
+async function loadData() {
+  try {
+    const resp = await fetch(DB_URL);
+    rawData = await resp.json();
+    // rawData format: array of {offer_id, brand, revenue, ordered_units, returns, returns_qty, hits_view, hits_tocart, month, monthLabel}
+    allData = rawData;
+    initFilters();
+    render();
+    document.getElementById('lastUpdate').textContent = '数据更新: ' + new Date().toLocaleString('zh-CN');
+  } catch(e) {
+    document.getElementById('statsRow').innerHTML = '<div style="padding:40px;text-align:center;color:#ff6b6b;">❌ 加载数据失败: ' + e.message + '<br><br>请确保 JSON 数据源可访问</div>';
+  }
+}
+
+// ── Extract unique months & brands ──
+function initFilters() {
+  const months = [...new Set(rawData.map(d => d.monthLabel))].sort();
+  const brands = [...new Set(rawData.map(d => d.brand).filter(Boolean))].sort();
+
+  const mSel = document.getElementById('monthFilter');
+  months.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; mSel.appendChild(o); });
+
+  const bSel = document.getElementById('brandFilter');
+  brands.forEach(b => { const o = document.createElement('option'); o.value = b; o.textContent = b; bSel.appendChild(o); });
+}
+
+// ── Get filtered data ──
+function getFiltered() {
+  const month = document.getElementById('monthFilter').value;
+  const brand = document.getElementById('brandFilter').value;
+  const search = document.getElementById('skuSearch').value.trim().toLowerCase();
+
+  let data = allData;
+  if (month !== 'all') data = data.filter(d => d.monthLabel === month);
+  if (brand !== 'all') data = data.filter(d => d.brand === brand);
+  if (search) data = data.filter(d => d.offer_id && d.offer_id.toLowerCase().includes(search));
+
+  return data;
+}
+
+// ── Aggregate by offer_id (across months) ──
+function aggregateBySku(data) {
+  const map = {};
+  data.forEach(d => {
+    const key = d.offer_id || 'unknown';
+    if (!map[key]) map[key] = { offer_id: key, brand: d.brand || '', revenue: 0, ordered_units: 0, returns_qty: 0, hits_view: 0, hits_tocart: 0, months: 0 };
+    map[key].revenue += d.revenue || 0;
+    map[key].ordered_units += d.ordered_units || 0;
+    map[key].returns_qty += d.returns_qty || 0;
+    map[key].hits_view += d.hits_view || 0;
+    map[key].hits_tocart += d.hits_tocart || 0;
+    map[key].months++;
+  });
+  return Object.values(map);
+}
+
+// ── Aggregate by month ──
+function aggregateByMonth(data) {
+  const map = {};
+  data.forEach(d => {
+    const key = d.monthLabel;
+    if (!map[key]) map[key] = { month: key, revenue: 0, ordered_units: 0, returns_qty: 0, hits_view: 0, hits_tocart: 0 };
+    map[key].revenue += d.revenue || 0;
+    map[key].ordered_units += d.ordered_units || 0;
+    map[key].returns_qty += d.returns_qty || 0;
+    map[key].hits_view += d.hits_view || 0;
+    map[key].hits_tocart += d.hits_tocart || 0;
+  });
+  return Object.values(map).sort((a, b) => a.month.localeCompare(b.month));
+}
+
+// ── Aggregate by brand ──
+function aggregateByBrand(data) {
+  const map = {};
+  data.forEach(d => {
+    const key = d.brand || '其他';
+    if (!map[key]) map[key] = { brand: key, revenue: 0, ordered_units: 0 };
+    map[key].revenue += d.revenue || 0;
+    map[key].ordered_units += d.ordered_units || 0;
+  });
+  return Object.values(map).sort((a, b) => b.revenue - a.revenue);
+}
+
+// ── Render all ──
+function render() {
+  const filtered = getFiltered();
+  const skuAgg = aggregateBySku(filtered);
+  const monthAgg = aggregateByMonth(filtered);
+  const brandAgg = aggregateByBrand(filtered);
+
+  // Stats
+  const totalRevenue = skuAgg.reduce((s, d) => s + d.revenue, 0);
+  const totalUnits = skuAgg.reduce((s, d) => s + d.ordered_units, 0);
+  const totalReturns = skuAgg.reduce((s, d) => s + d.returns_qty, 0);
+  const totalViews = skuAgg.reduce((s, d) => s + d.hits_view, 0);
+  const totalCarts = skuAgg.reduce((s, d) => s + d.hits_tocart, 0);
+  const activeSku = skuAgg.filter(d => d.ordered_units > 0).length;
+  const returnRate = totalUnits > 0 ? (totalReturns / totalUnits * 100) : 0;
+  const aov = totalUnits > 0 ? (totalRevenue / totalUnits) : 0;
+  const cartRate = totalViews > 0 ? (totalCarts / totalViews * 100) : 0;
+
+  document.getElementById('statRevenue').textContent = totalRevenue.toLocaleString('ru-RU', {minimumFractionDigits:2});
+  document.getElementById('statUnits').textContent = totalUnits.toLocaleString();
+  document.getElementById('statSku').textContent = activeSku;
+  document.getElementById('statReturnRate').textContent = returnRate.toFixed(2);
+  document.getElementById('statAov').textContent = aov.toLocaleString('ru-RU', {minimumFractionDigits:2});
+  document.getElementById('statCartRate').textContent = cartRate.toFixed(2);
+
+  // Trend chart
+  renderTrend(monthAgg);
+  // Brand pie
+  renderBrandPie(brandAgg);
+  // Top SKU bar
+  renderTopSku(skuAgg);
+  // Table
+  renderTable(skuAgg);
+}
+
+// ── Trend chart ──
+function renderTrend(monthAgg) {
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  if (chartInstances.trend) chartInstances.trend.destroy();
+
+  const labels = monthAgg.map(d => d.month);
+  const revenue = monthAgg.map(d => d.revenue);
+  const units = monthAgg.map(d => d.ordered_units);
+
+  chartInstances.trend = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: '销售额 (₽)',
+          data: revenue,
+          borderColor: '#6c8cff',
+          backgroundColor: 'rgba(108,140,255,0.1)',
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y',
+          pointRadius: 4,
+        },
+        {
+          label: '销量 (件)',
+          data: units,
+          borderColor: '#ffb86c',
+          backgroundColor: 'rgba(255,184,108,0.1)',
+          fill: true,
+          tension: 0.3,
+          yAxisID: 'y1',
+          pointRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#888', usePointStyle: true, padding: 16 } },
+        tooltip: {
+          backgroundColor: '#1a1a24',
+          titleColor: '#e0e0e0',
+          bodyColor: '#ccc',
+          borderColor: '#2a2a3a',
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y || 0).toLocaleString('ru-RU')
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#666' }, grid: { color: '#22222e' } },
+        y: {
+          type: 'linear', position: 'left',
+          ticks: { color: '#888', callback: v => v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(0)+'K' : v },
+          grid: { color: '#22222e' },
+        },
+        y1: {
+          type: 'linear', position: 'right',
+          ticks: { color: '#888' },
+          grid: { display: false },
+        }
+      }
+    }
+  });
+}
+
+// ── Brand pie ──
+function renderBrandPie(brandAgg) {
+  const ctx = document.getElementById('brandChart').getContext('2d');
+  if (chartInstances.brand) chartInstances.brand.destroy();
+
+  const colors = ['#6c8cff','#ff6b6b','#ffb86c','#51cf66','#cc5de8','#20c997','#fcc419','#ff922b','#748ffc','#e599f7'];
+  const top = brandAgg.slice(0, 10);
+  const labels = top.map(d => d.brand);
+  const data = top.map(d => d.revenue);
+
+  chartInstances.brand = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { color: '#888', padding: 12, font: { size: 11 } }
+        },
+        tooltip: {
+          backgroundColor: '#1a1a24',
+          titleColor: '#e0e0e0',
+          bodyColor: '#ccc',
+          borderColor: '#2a2a3a',
+          borderWidth: 1,
+          callbacks: {
+            label: ctx => {
+              const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+              const pct = ((ctx.parsed / total) * 100).toFixed(1);
+              return ctx.label + ': ₽' + ctx.parsed.toLocaleString() + ' (' + pct + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ── Top SKU bar ──
+function renderTopSku(skuAgg) {
+  const ctx = document.getElementById('topSkuChart').getContext('2d');
+  if (chartInstances.topSku) chartInstances.topSku.destroy();
+
+  const sorted = [...skuAgg].sort((a, b) => b.revenue - a.revenue).slice(0, 15);
+  const labels = sorted.map(d => d.offer_id || 'unknown');
+  const data = sorted.map(d => d.revenue);
+  const units = sorted.map(d => d.ordered_units);
+
+  chartInstances.topSku = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '销售额 (₽)', data, backgroundColor: '#6c8cff', borderRadius: 4, borderSkipped: false },
+        { label: '销量 (件)', data: units, backgroundColor: '#ffb86c', borderRadius: 4, borderSkipped: false }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {
+        legend: { labels: { color: '#888', usePointStyle: true, padding: 12 } },
+        tooltip: {
+          backgroundColor: '#1a1a24',
+          titleColor: '#e0e0e0',
+          bodyColor: '#ccc',
+          borderColor: '#2a2a3a',
+          borderWidth: 1,
+          callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.x || 0).toLocaleString('ru-RU') }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#888', callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v },
+          grid: { color: '#22222e' }
+        },
+        y: { ticks: { color: '#888', font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ── Table ──
+let sortCol = 'revenue';
+let sortDir = 'desc';
+let tableData = [];
+
+function renderTable(skuAgg) {
+  tableData = [...skuAgg];
+
+  // Sort
+  tableData.sort((a, b) => {
+    let va = a[sortCol] ?? '';
+    let vb = b[sortCol] ?? '';
+    if (typeof va === 'string') va = va.toLowerCase();
+    if (typeof vb === 'string') vb = vb.toLowerCase();
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // Table search filter
+  const q = document.getElementById('tableSearch').value.trim().toLowerCase();
+  let display = tableData;
+  if (q) display = display.filter(d =>
+    (d.offer_id && d.offer_id.toLowerCase().includes(q)) ||
+    (d.brand && d.brand.toLowerCase().includes(q))
+  );
+
+  document.getElementById('tableCount').textContent = display.length + ' 条记录';
+
+  // Paginate
+  const totalPages = Math.ceil(display.length / PAGE_SIZE) || 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = display.slice(start, start + PAGE_SIZE);
+
+  const tbody = document.getElementById('skuTableBody');
+  tbody.innerHTML = page.map(d => {
+    const rr = d.ordered_units > 0 ? (d.returns_qty / d.ordered_units * 100) : 0;
+    const avg = d.ordered_units > 0 ? (d.revenue / d.ordered_units) : 0;
+    const cr = d.hits_view > 0 ? (d.ordered_units / d.hits_view * 100) : 0;
+    const cartR = d.hits_view > 0 ? (d.hits_tocart / d.hits_view * 100) : 0;
+    return `<tr>
+      <td class="sku-name">${d.offer_id || '—'}</td>
+      <td>${d.brand || '—'}</td>
+      <td style="text-align:right;">₽${d.revenue.toLocaleString('ru-RU')}</td>
+      <td style="text-align:right;">${d.ordered_units}</td>
+      <td style="text-align:right;">${d.returns_qty}</td>
+      <td style="text-align:right;">${rr.toFixed(1)}%</td>
+      <td style="text-align:right;">₽${avg.toLocaleString('ru-RU', {minimumFractionDigits:2})}</td>
+      <td style="text-align:right;">${cartR.toFixed(1)}%</td>
+      <td style="text-align:right;">${cr.toFixed(2)}%</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('pageInfo').textContent = `${currentPage} / ${totalPages}`;
+  document.getElementById('prevPage').disabled = currentPage <= 1;
+  document.getElementById('nextPage').disabled = currentPage >= totalPages;
+}
+
+// ── Events ──
+document.getElementById('monthFilter').addEventListener('change', () => { currentPage = 1; render(); });
+document.getElementById('brandFilter').addEventListener('change', () => { currentPage = 1; render(); });
+document.getElementById('skuSearch').addEventListener('input', () => { currentPage = 1; render(); });
+document.getElementById('tableSearch').addEventListener('input', () => { currentPage = 1; render(); });
+document.getElementById('sortBy').addEventListener('change', () => {
+  const v = document.getElementById('sortBy').value;
+  if (v === 'revenue') { sortCol = 'revenue'; sortDir = 'desc'; }
+  else if (v === 'units') { sortCol = 'ordered_units'; sortDir = 'desc'; }
+  else if (v === 'returns') { sortCol = 'returns_qty'; sortDir = 'desc'; }
+  else if (v === 'name') { sortCol = 'offer_id'; sortDir = 'asc'; }
+  render();
+});
+
+document.getElementById('prevPage').addEventListener('click', () => { if (currentPage > 1) { currentPage--; render(); } });
+document.getElementById('nextPage').addEventListener('click', () => { const total = Math.ceil(tableData.length / PAGE_SIZE); if (currentPage < total) { currentPage++; render(); } });
+
+// ── Init ──
+loadData();
+</script>
+</body>
+</html>
