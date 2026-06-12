@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ozon 分析報表</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0f0f13; color: #e0e0e0; padding: 16px;
+}
+.header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
+}
+.header h1 { font-size: 20px; font-weight: 600; color: #fff; }
+.header h1 span { color: #6c8cff; }
+.back-btn {
+  background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 8px;
+  padding: 8px 16px; color: #aaa; text-decoration: none; font-size: 13px; transition: all 0.2s;
+}
+.back-btn:hover { background: #2a2a3a; color: #fff; }
+
+.tabs {
+  display: flex; gap: 4px; margin-bottom: 16px; background: #1a1a24;
+  border-radius: 10px; padding: 4px; overflow-x: auto;
+}
+.tab-btn {
+  padding: 8px 16px; font-size: 13px; cursor: pointer; border: none;
+  background: transparent; color: #666; border-radius: 8px; white-space: nowrap;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.tab-btn.active { background: #6c8cff; color: #fff; }
+.tab-btn:hover:not(.active) { color: #aaa; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.spacer { height: 16px; }
+
+/* Stats row */
+.stats-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px; margin-bottom: 16px;
+}
+.stat-card {
+  background: #1a1a24; border-radius: 10px; padding: 12px;
+  border: 1px solid #2a2a3a;
+}
+.stat-card .label { font-size: 11px; color: #888; margin-bottom: 2px; }
+.stat-card .value { font-size: 18px; font-weight: 600; color: #fff; }
+.stat-card .sub { font-size: 11px; color: #666; margin-top: 2px; }
+.stat-card .chg-up { color: #51cf66; }
+.stat-card .chg-down { color: #ff6b6b; }
+.stat-card .chg-same { color: #888; }
+
+.chart-card {
+  background: #1a1a24; border-radius: 10px; padding: 12px;
+  border: 1px solid #2a2a3a; margin-bottom: 12px;
+}
+.chart-card h3 { font-size: 13px; color: #aaa; margin-bottom: 8px; font-weight: 500; }
+.chart-card canvas { max-height: 260px; height: 260px; width: 100% !important; }
+
+.data-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+}
+.data-table th {
+  background: #14141e; color: #888; font-weight: 500;
+  padding: 8px 10px; text-align: left; white-space: nowrap;
+}
+.data-table td { padding: 6px 10px; border-top: 1px solid #22222e; }
+.data-table tr:hover td { background: #1e1e2c; }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+.filters {
+  display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: flex-end;
+}
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group label { font-size: 11px; color: #888; font-weight: 500; }
+.filter-group select, .filter-group input {
+  background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 8px;
+  padding: 6px 10px; color: #e0e0e0; font-size: 13px; min-width: 100px; outline: none;
+}
+.filter-group select:focus, .filter-group input:focus { border-color: #6c8cff; }
+
+.brand-bar {
+  display: flex; align-items: center; gap: 8px; padding: 6px 0;
+  border-bottom: 1px solid #22222e;
+}
+.brand-bar .name { min-width: 70px; font-size: 13px; font-weight: 500; color: #ddd; }
+.brand-bar .fill-wrap { flex: 1; height: 20px; background: #22222e; border-radius: 4px; overflow: hidden; }
+.brand-bar .fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+.brand-bar .pct { min-width: 40px; text-align: right; font-size: 12px; color: #aaa; }
+.brand-bar .rev { min-width: 70px; text-align: right; font-size: 11px; color: #888; }
+
+@media (max-width: 768px) {
+  body { padding: 10px; }
+  .header h1 { font-size: 17px; }
+  .tab-btn { padding: 6px 12px; font-size: 12px; }
+  .stats-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .stat-card { padding: 8px; }
+  .stat-card .value { font-size: 15px; }
+  .chart-card canvas { max-height: 200px; height: 200px; }
+}
+@media (max-width: 480px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 <span>Ozon</span> 分析報表</h1>
+  <a href="https://rrnnpmdr.github.io/ozon-dashboard/" class="back-btn">← 返回儀表板</a>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="monthly">📆 月報</button>
+  <button class="tab-btn" data-tab="daily">📅 日報</button>
+  <button class="tab-btn" data-tab="brands">🏷️ 品牌分析</button>
+</div>
+
+<!-- ═══ 月報 ═══ -->
+<div class="tab-content active" id="tab-monthly">
+  <div class="filters">
+    <div class="filter-group">
+      <label>選擇月份比較</label>
+      <select id="mCompare"><option value="">請選擇</option></select>
+    </div>
+  </div>
+
+  <div class="stats-row" id="monthlyStats"></div>
+
+  <div class="chart-card">
+    <h3>📈 月度銷售額趨勢</h3>
+    <canvas id="mRevenueChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>📊 月度銷量 & 活躍 SKU</h3>
+    <canvas id="mUnitsChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>📉 關鍵指標變化</h3>
+    <div class="table-scroll">
+      <table class="data-table" id="mDetailTable"></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 日報 ═══ -->
+<div class="tab-content" id="tab-daily">
+  <div class="filters">
+    <div class="filter-group">
+      <label>選擇日期</label>
+      <select id="dDateFilter"><option value="">請選擇</option></select>
+    </div>
+  </div>
+
+  <div class="stats-row" id="dailyStats"></div>
+
+  <div class="chart-card">
+    <h3>🔥 今日 Top SKU 排行</h3>
+    <canvas id="dTopSkuChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>📋 今日各 SKU 表現</h3>
+    <div class="table-scroll">
+      <table class="data-table" id="dSkuTable"></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 品牌分析 ═══ -->
+<div class="tab-content" id="tab-brands">
+  <div class="filters">
+    <div class="filter-group">
+      <label>選擇品牌</label>
+      <select id="bBrandFilter"><option value="all">全部品牌</option></select>
+    </div>
+  </div>
+
+  <div class="stats-row" id="brandStats"></div>
+
+  <div class="chart-card">
+    <h3>🏆 品牌銷售佔比</h3>
+    <canvas id="bPieChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>📈 Top 5 品牌月度趨勢</h3>
+    <canvas id="bTrendChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>📋 品牌詳細排名</h3>
+    <div id="bRankList"></div>
+  </div>
+</div>
+
+<script>
+const REPORT_URL = 'https://rrnnpmdr.github.io/ozon-dashboard/report.json';
+
+let reportData = null;
+let chartInstances = {};
+const monthLabels = {'2026-02':'2月','2026-03':'3月','2026-04':'4月','2026-05':'5月','2026-06':'6月','2026-07':'7月'};
+const brandColors = ['#6c8cff','#ff6b6b','#ffb86c','#51cf66','#cc5de8','#20c997','#fcc419','#ff922b','#748ffc','#e599f7'];
+
+async function loadData() {
+  try {
+    const r = await fetch(REPORT_URL);
+    reportData = await r.json();
+    initFilters();
+    renderMonthly();
+    renderDaily();
+    renderBrands();
+  } catch(e) {
+    document.body.innerHTML = `<div style="padding:40px;text-align:center;color:#ff6b6b;">
+      ❌ 加載數據失敗: ${e.message}<br><br>
+      <a href="#" onclick="location.reload()" style="color:#6c8cff;">重新加載</a>
+    </div>`;
+  }
+}
+
+function initFilters() {
+  // Month compare
+  const mSel = document.getElementById('mCompare');
+  reportData.monthly.forEach(m => {
+    const o = document.createElement('option'); o.value = m.month; o.textContent = m.label; mSel.appendChild(o);
+  });
+  // Date filter
+  const dSel = document.getElementById('dDateFilter');
+  // Get all dates from raw data
+  fetch('https://rrnnpmdr.github.io/ozon-dashboard/daily.json').then(r => r.json()).then(daily => {
+    daily.forEach(d => {
+      const o = document.createElement('option'); o.value = d.date; o.textContent = d.date; dSel.appendChild(o);
+    });
+    if (daily.length > 0) dSel.value = daily[daily.length-1].date;
+    renderDaily();
+  }).catch(() => {});
+  // Brand filter
+  const bSel = document.getElementById('bBrandFilter');
+  reportData.brand_ranking.forEach(b => {
+    const o = document.createElement('option'); o.value = b.brand; o.textContent = b.brand; bSel.appendChild(o);
+  });
+}
+
+// ════ Tabs ════
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ════ Monthly Report ════
+function renderMonthly() {
+  const data = reportData.monthly;
+  if (!data || data.length === 0) return;
+
+  const latest = data[data.length - 1];
+  const totalRev = data.reduce((s,d) => s + d.revenue, 0);
+  const totalUnits = data.reduce((s,d) => s + d.units, 0);
+
+  // Stats cards
+  document.getElementById('monthlyStats').innerHTML = `
+    <div class="stat-card">
+      <div class="label">最新月份</div>
+      <div class="value">${latest.label}</div>
+      <div class="sub">${latest.month}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">月銷售額</div>
+      <div class="value">₽${(latest.revenue/1000000).toFixed(2)}M</div>
+      <div class="sub">${latest.revenue.toLocaleString('ru-RU', {minimumFractionDigits:2})} ₽</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">月銷量</div>
+      <div class="value">${latest.units.toLocaleString()} 件</div>
+      <div class="sub">${latest.skus} 個活躍 SKU</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">環比變化</div>
+      <div class="value ${latest.change_rev > 0 ? 'chg-up' : latest.change_rev < 0 ? 'chg-down' : 'chg-same'}">
+        ${latest.change_rev !== null ? (latest.change_rev > 0 ? '↑' : '↓') + ' ' + Math.abs(latest.change_rev).toFixed(1) + '%' : '—'}
+      </div>
+      <div class="sub">vs 上月銷售額</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">客單價</div>
+      <div class="value">₽${latest.aov.toLocaleString('ru-RU', {minimumFractionDigits:2})}</div>
+      <div class="sub">加購率 ${latest.cart_rate}%</div>
+    </div>
+  `;
+
+  // Revenue chart
+  renderMChart('mRevenueChart', 'bar', data.map(d => d.label), [
+    { label: '銷售額 (₽)', data: data.map(d => d.revenue), backgroundColor: 'rgba(108,140,255,0.7)', borderRadius: 3, borderSkipped: false, yAxisID: 'y' },
+    { label: '銷售額變化 %', data: data.map(d => d.change_rev || 0), type: 'line', borderColor: '#ffb86c', backgroundColor: 'rgba(255,184,108,0.1)', fill: true, tension: 0.3, pointRadius: 4, yAxisID: 'y1', order: 1 }
+  ], {
+    y: { type: 'linear', position: 'left', ticks: { color: '#888', callback: v => v>=1000000 ? (v/1000000).toFixed(1)+'M' : v>=1000 ? (v/1000).toFixed(0)+'K' : v }, grid: { color: '#22222e' } },
+    y1: { type: 'linear', position: 'right', ticks: { color: '#ffb86c', callback: v => v+'%' }, grid: { display: false } }
+  });
+
+  // Units + SKUs chart
+  renderMChart('mUnitsChart', 'bar', data.map(d => d.label), [
+    { label: '銷量 (件)', data: data.map(d => d.units), backgroundColor: 'rgba(81,207,102,0.7)', borderRadius: 3, borderSkipped: false, yAxisID: 'y' },
+    { label: '活躍 SKU', data: data.map(d => d.skus), type: 'line', borderColor: '#cc5de8', backgroundColor: 'rgba(204,93,232,0.1)', fill: true, tension: 0.3, pointRadius: 4, yAxisID: 'y1', order: 1 }
+  ], {
+    y: { type: 'linear', position: 'left', ticks: { color: '#888' }, grid: { color: '#22222e' } },
+    y1: { type: 'linear', position: 'right', ticks: { color: '#cc5de8' }, grid: { display: false } }
+  });
+
+  // Detail table
+  const mTable = document.getElementById('mDetailTable');
+  mTable.innerHTML = `<thead><tr>
+    <th>月份</th><th>銷售額 (₽)</th><th>銷量</th><th>活躍SKU</th>
+    <th>客單價</th><th>加購率</th><th>瀏覽量</th><th>環比銷售</th><th>環比銷量</th>
+  </tr></thead><tbody>
+    ${data.map(m => `
+      <tr>
+        <td>${m.label}</td>
+        <td>₽${m.revenue.toLocaleString('ru-RU', {minimumFractionDigits:2})}</td>
+        <td>${m.units.toLocaleString()}</td>
+        <td>${m.skus}</td>
+        <td>₽${m.aov.toLocaleString('ru-RU', {minimumFractionDigits:2})}</td>
+        <td>${m.cart_rate}%</td>
+        <td>${m.views.toLocaleString()}</td>
+        <td class="${m.change_rev > 0 ? 'chg-up' : m.change_rev < 0 ? 'chg-down' : 'chg-same'}">
+          ${m.change_rev !== null ? (m.change_rev > 0 ? '↑' : '↓') + ' ' + Math.abs(m.change_rev).toFixed(1) + '%' : '—'}
+        </td>
+        <td class="${m.change_units > 0 ? 'chg-up' : m.change_units < 0 ? 'chg-down' : 'chg-same'}">
+          ${m.change_units !== null ? (m.change_units > 0 ? '↑' : '↓') + ' ' + Math.abs(m.change_units).toFixed(1) + '%' : '—'}
+        </td>
+      </tr>
+    `).join('')}
+  </tbody>`;
+
+  // Compare month
+  document.getElementById('mCompare').addEventListener('change', function() {
+    if (!this.value) return;
+    const target = data.find(m => m.month === this.value);
+    if (!target) return;
+    alert(
+      `📆 ${target.label} 對比 ${latest.label}\n\n` +
+      `銷售額: ₽${target.revenue.toLocaleString('ru-RU', {minimumFractionDigits:2})}  →  ₽${latest.revenue.toLocaleString('ru-RU', {minimumFractionDigits:2})}\n` +
+      `變化: ${target.change_rev !== null ? (latest.revenue - target.revenue > 0 ? '↑' : '↓') + ' ' + Math.abs(((latest.revenue - target.revenue) / target.revenue * 100)).toFixed(1) + '%' : '—'}\n\n` +
+      `銷量: ${target.units}  →  ${latest.units}\n` +
+      `變化: ${target.change_units !== null ? (latest.units - target.units > 0 ? '↑' : '↓') + ' ' + Math.abs(((latest.units - target.units) / target.units * 100)).toFixed(1) + '%' : '—'}\n\n` +
+      `活躍SKU: ${target.skus}  →  ${latest.skus}\n` +
+      `客單價: ₽${target.aov.toLocaleString('ru-RU', {minimumFractionDigits:2})}  →  ₽${latest.aov.toLocaleString('ru-RU', {minimumFractionDigits:2})}\n` +
+      `加購率: ${target.cart_rate}%  →  ${latest.cart_rate}%`
+    );
+  });
+}
+
+function renderMChart(canvasId, type, labels, datasets, scales) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+  chartInstances[canvasId] = new Chart(ctx, {
+    type,
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#888', usePointStyle: true, padding: 12, font: { size: 11 } } },
+        tooltip: { backgroundColor: '#1a1a24', titleColor: '#e0e0e0', bodyColor: '#ccc', borderColor: '#2a2a3a', borderWidth: 1, padding: 8 }
+      },
+      scales
+    }
+  });
+}
+
+// ════ Daily Report ════
+async function renderDaily() {
+  if (!reportData || !reportData.today) return;
+  const t = reportData.today;
+  const y = reportData.yesterday;
+  const top = reportData.top_skus || [];
+
+  const chgRev = y ? ((t.revenue - y.revenue) / y.revenue * 100) : null;
+  const chgUnits = y ? ((t.units - y.units) / y.units * 100) : null;
+
+  document.getElementById('dailyStats').innerHTML = `
+    <div class="stat-card">
+      <div class="label">日期</div>
+      <div class="value">${t.date}</div>
+      <div class="sub">最新數據</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">銷售額</div>
+      <div class="value">₽${(t.revenue/1000).toFixed(1)}K</div>
+      <div class="sub">${t.revenue.toLocaleString('ru-RU', {minimumFractionDigits:2})} ₽</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">銷量</div>
+      <div class="value">${t.units} 件</div>
+      <div class="sub">${t.skus} 個SKU有銷量</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">vs 昨日</div>
+      <div class="value ${chgRev > 0 ? 'chg-up' : chgRev < 0 ? 'chg-down' : 'chg-same'}">
+        ${chgRev !== null ? (chgRev > 0 ? '↑' : '↓') + ' ' + Math.abs(chgRev).toFixed(1) + '%' : '—'}
+      </div>
+      <div class="sub">${chgUnits !== null ? '銷量 ' + (chgUnits > 0 ? '↑' : '↓') + ' ' + Math.abs(chgUnits).toFixed(1) + '%' : ''}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">客單價</div>
+      <div class="value">₽${t.aov.toLocaleString('ru-RU', {minimumFractionDigits:2})}</div>
+      <div class="sub">加購率 ${t.cart_rate}%</div>
+    </div>
+  `;
+
+  // Top SKUs chart
+  if (top.length > 0) {
+    const ctx = document.getElementById('dTopSkuChart').getContext('2d');
+    if (chartInstances.dTopSkuChart) chartInstances.dTopSkuChart.destroy();
+    const names = top.map(s => (s.offer_id || '').length > 20 ? (s.offer_id || '').substring(0,18)+'…' : (s.offer_id || '—'));
+    chartInstances.dTopSkuChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: names,
+        datasets: [
+          { label: '銷售額 (₽)', data: top.map(s => s.revenue), backgroundColor: '#6c8cff', borderRadius: 3, borderSkipped: false },
+          { label: '銷量', data: top.map(s => s.units), backgroundColor: '#ffb86c', borderRadius: 3, borderSkipped: false }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        plugins: {
+          legend: { labels: { color: '#888', usePointStyle: true, padding: 12, font: { size: 11 } } },
+          tooltip: { backgroundColor: '#1a1a24', titleColor: '#e0e0e0', bodyColor: '#ccc', borderColor: '#2a2a3a', borderWidth: 1, padding: 8, callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.x || 0).toLocaleString('ru-RU') } }
+        },
+        scales: {
+          x: { ticks: { color: '#888', callback: v => v>=1000 ? (v/1000).toFixed(0)+'K' : v }, grid: { color: '#22222e' } },
+          y: { ticks: { color: '#888', font: { size: 9 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // SKU table
+  const dTable = document.getElementById('dSkuTable');
+  dTable.innerHTML = `<thead><tr>
+    <th>#</th><th>offer_id</th><th>品牌</th><th>銷售額</th><th>銷量</th>
+    <th>加購率</th><th>轉化率</th>
+  </tr></thead><tbody>
+    ${top.map((s, i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td>${s.offer_id || '—'}</td>
+        <td>${s.brand || '—'}</td>
+        <td>₽${s.revenue.toLocaleString('ru-RU', {minimumFractionDigits:2})}</td>
+        <td>${s.units}</td>
+        <td>${s.cart_rate}%</td>
+        <td>${s.conversion}%</td>
+      </tr>
+    `).join('')}
+  </tbody>`;
+}
+
+// ════ Brand Analysis ════
+function renderBrands() {
+  const brands = reportData.brand_ranking;
+  const trend = reportData.brand_trend || {};
+  if (!brands || brands.length === 0) return;
+
+  const totalRev = brands.reduce((s,b) => s + b.revenue, 0);
+  const top5 = brands.slice(0, 5);
+
+  document.getElementById('brandStats').innerHTML = `
+    <div class="stat-card">
+      <div class="label">總品牌數</div>
+      <div class="value">${brands.length}</div>
+      <div class="sub">有銷售記錄</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">TOP 1</div>
+      <div class="value">${brands[0].brand}</div>
+      <div class="sub">₽${(brands[0].revenue/1000000).toFixed(2)}M · ${brands[0].pct}%</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">TOP 5 總佔比</div>
+      <div class="value">${top5.reduce((s,b) => s + b.pct, 0).toFixed(1)}%</div>
+      <div class="sub">₽${(top5.reduce((s,b) => s + b.revenue, 0)/1000000).toFixed(2)}M</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">品牌平均銷售</div>
+      <div class="value">₽${(totalRev/brands.length/1000).toFixed(0)}K</div>
+      <div class="sub">${brands.filter(b => b.revenue > 100000).length} 個品牌 >10萬₽</div>
+    </div>
+  `;
+
+  // Pie chart
+  const pieLabels = top5.map(b => b.brand);
+  const pieData = top5.map(b => b.revenue);
+  if (brands.length > 5) {
+    pieLabels.push('其他');
+    pieData.push(brands.slice(5).reduce((s,b) => s + b.revenue, 0));
+  }
+  const ctx = document.getElementById('bPieChart').getContext('2d');
+  if (chartInstances.bPieChart) chartInstances.bPieChart.destroy();
+  chartInstances.bPieChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: brandColors.slice(0, pieLabels.length), borderWidth: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#888', padding: 10, font: { size: 11 } } },
+        tooltip: { backgroundColor: '#1a1a24', titleColor: '#e0e0e0', bodyColor: '#ccc', borderColor: '#2a2a3a', borderWidth: 1, callbacks: { label: ctx => { const total = ctx.dataset.data.reduce((a,b)=>a+b,0); const pct = ((ctx.parsed/total)*100).toFixed(1); return ctx.label + ': ₽' + ctx.parsed.toLocaleString() + ' (' + pct + '%)'; } } }
+      }
+    }
+  });
+
+  // Brand trend chart (top 5)
+  const trendLabels = reportData.monthly.map(m => m.label);
+  const colors = ['#6c8cff','#ff6b6b','#ffb86c','#51cf66','#cc5de8'];
+  const trendDatasets = top5.map((b, i) => {
+    const bd = trend[b.brand] || [];
+    const dataMap = {};
+    bd.forEach(d => { dataMap[d.month] = d.revenue; });
+    return {
+      label: b.brand,
+      data: trendLabels.map(m => dataMap[m] || 0),
+      borderColor: colors[i],
+      backgroundColor: colors[i] + '20',
+      fill: false,
+      tension: 0.3,
+      pointRadius: 3
+    };
+  });
+  const ctx2 = document.getElementById('bTrendChart').getContext('2d');
+  if (chartInstances.bTrendChart) chartInstances.bTrendChart.destroy();
+  chartInstances.bTrendChart = new Chart(ctx2, {
+    type: 'line',
+    data: { labels: trendLabels, datasets: trendDatasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#888', usePointStyle: true, padding: 12, font: { size: 11 } } },
+        tooltip: { backgroundColor: '#1a1a24', titleColor: '#e0e0e0', bodyColor: '#ccc', borderColor: '#2a2a3a', borderWidth: 1, padding: 8, callbacks: { label: ctx => ctx.dataset.label + ': ₽' + (ctx.parsed.y || 0).toLocaleString('ru-RU') } }
+      },
+      scales: {
+        x: { ticks: { color: '#666' }, grid: { color: '#22222e' } },
+        y: { type: 'linear', ticks: { color: '#888', callback: v => v>=1000000 ? (v/1000000).toFixed(1)+'M' : v>=1000 ? (v/1000).toFixed(0)+'K' : v }, grid: { color: '#22222e' } }
+      }
+    }
+  });
+
+  // Brand ranking list
+  const rank = document.getElementById('bRankList');
+  const maxRev = brands[0].revenue;
+  rank.innerHTML = brands.map(b => `
+    <div class="brand-bar">
+      <span class="name" style="color:${b.pct >= 10 ? '#fff' : '#aaa'}">${b.brand}</span>
+      <div class="fill-wrap">
+        <div class="fill" style="width:${(b.revenue/maxRev*100).toFixed(1)}%; background:${brandColors[brands.indexOf(b) % brandColors.length]}"></div>
+      </div>
+      <span class="pct">${b.pct}%</span>
+      <span class="rev">₽${(b.revenue/1000).toFixed(0)}K</span>
+    </div>
+  `).join('');
+}
+
+loadData();
+</script>
+</body>
+</html>
