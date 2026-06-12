@@ -1,4 +1,14 @@
-<!DOCTYPE html>
+"""Generate the enhanced index.html + report.html for ozon-dashboard"""
+import json
+
+with open('analysis.json') as f:
+    data = json.load(f)
+
+# ──────────────────────────────────────
+# PART 1: Enhanced index.html (add views, cart rate, conversion, return rate)
+# ──────────────────────────────────────
+
+index_template = """<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -483,4 +493,8 @@ document.getElementById('nextPage').addEventListener('click', () => { const t=Ma
 loadData();
 </script>
 </body>
-</html>
+</html>"""
+
+with open('index.html', 'w') as f:
+    f.write(index_template)
+print("✅ index.html written with new metrics")
