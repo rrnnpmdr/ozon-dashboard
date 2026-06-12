@@ -1,0 +1,1050 @@
+[
+  {
+    "date": "2026-02-01",
+    "revenue": 70149.0746,
+    "ordered_units": 30,
+    "hits_view": 26460,
+    "hits_tocart": 137,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-02",
+    "revenue": 46243.5542,
+    "ordered_units": 22,
+    "hits_view": 34485,
+    "hits_tocart": 159,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-03",
+    "revenue": 123805.0167,
+    "ordered_units": 52,
+    "hits_view": 28796,
+    "hits_tocart": 181,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-04",
+    "revenue": 78624.4003,
+    "ordered_units": 42,
+    "hits_view": 28730,
+    "hits_tocart": 177,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-05",
+    "revenue": 97121.9275,
+    "ordered_units": 51,
+    "hits_view": 31146,
+    "hits_tocart": 207,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-06",
+    "revenue": 109773.5769,
+    "ordered_units": 46,
+    "hits_view": 29731,
+    "hits_tocart": 189,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-07",
+    "revenue": 136500.0414,
+    "ordered_units": 55,
+    "hits_view": 32152,
+    "hits_tocart": 212,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-08",
+    "revenue": 122157.3454,
+    "ordered_units": 56,
+    "hits_view": 36070,
+    "hits_tocart": 261,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-09",
+    "revenue": 97486.7948,
+    "ordered_units": 47,
+    "hits_view": 33631,
+    "hits_tocart": 248,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-10",
+    "revenue": 143499.6716,
+    "ordered_units": 53,
+    "hits_view": 34005,
+    "hits_tocart": 221,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-11",
+    "revenue": 103056.155,
+    "ordered_units": 48,
+    "hits_view": 33372,
+    "hits_tocart": 227,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-12",
+    "revenue": 108185.3158,
+    "ordered_units": 47,
+    "hits_view": 32543,
+    "hits_tocart": 194,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-13",
+    "revenue": 118578.9811,
+    "ordered_units": 50,
+    "hits_view": 31059,
+    "hits_tocart": 206,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-14",
+    "revenue": 123569.9957,
+    "ordered_units": 56,
+    "hits_view": 30200,
+    "hits_tocart": 197,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-15",
+    "revenue": 120320.7787,
+    "ordered_units": 53,
+    "hits_view": 33982,
+    "hits_tocart": 188,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-16",
+    "revenue": 110601.1481,
+    "ordered_units": 48,
+    "hits_view": 31290,
+    "hits_tocart": 214,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-17",
+    "revenue": 117899.7751,
+    "ordered_units": 45,
+    "hits_view": 30274,
+    "hits_tocart": 217,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-18",
+    "revenue": 123129.2003,
+    "ordered_units": 47,
+    "hits_view": 28103,
+    "hits_tocart": 195,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-19",
+    "revenue": 125789.9104,
+    "ordered_units": 54,
+    "hits_view": 30006,
+    "hits_tocart": 259,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-20",
+    "revenue": 163385.0233,
+    "ordered_units": 66,
+    "hits_view": 30811,
+    "hits_tocart": 222,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-21",
+    "revenue": 159992.4055,
+    "ordered_units": 67,
+    "hits_view": 35934,
+    "hits_tocart": 263,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-22",
+    "revenue": 183332.6209,
+    "ordered_units": 73,
+    "hits_view": 35494,
+    "hits_tocart": 212,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-23",
+    "revenue": 136148.28340000001,
+    "ordered_units": 59,
+    "hits_view": 35622,
+    "hits_tocart": 236,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-24",
+    "revenue": 136523.9837,
+    "ordered_units": 57,
+    "hits_view": 33375,
+    "hits_tocart": 183,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-25",
+    "revenue": 139277.7122,
+    "ordered_units": 60,
+    "hits_view": 36421,
+    "hits_tocart": 227,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-26",
+    "revenue": 122399.8552,
+    "ordered_units": 55,
+    "hits_view": 33658,
+    "hits_tocart": 191,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-27",
+    "revenue": 103133.86630000001,
+    "ordered_units": 50,
+    "hits_view": 33077,
+    "hits_tocart": 197,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-02-28",
+    "revenue": 149743.4676,
+    "ordered_units": 61,
+    "hits_view": 33202,
+    "hits_tocart": 190,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-01",
+    "revenue": 154821.9669,
+    "ordered_units": 69,
+    "hits_view": 35142,
+    "hits_tocart": 261,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-02",
+    "revenue": 132623.86059999999,
+    "ordered_units": 55,
+    "hits_view": 35989,
+    "hits_tocart": 233,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-03",
+    "revenue": 148626.2772,
+    "ordered_units": 59,
+    "hits_view": 34941,
+    "hits_tocart": 222,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-04",
+    "revenue": 196042.3174,
+    "ordered_units": 79,
+    "hits_view": 34484,
+    "hits_tocart": 240,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-05",
+    "revenue": 145560.35199999998,
+    "ordered_units": 61,
+    "hits_view": 35980,
+    "hits_tocart": 218,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-06",
+    "revenue": 124910.1719,
+    "ordered_units": 56,
+    "hits_view": 31638,
+    "hits_tocart": 198,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-07",
+    "revenue": 187897.9008,
+    "ordered_units": 65,
+    "hits_view": 40259,
+    "hits_tocart": 219,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-08",
+    "revenue": 154092.9445,
+    "ordered_units": 58,
+    "hits_view": 30055,
+    "hits_tocart": 198,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-09",
+    "revenue": 153996.3953,
+    "ordered_units": 52,
+    "hits_view": 35731,
+    "hits_tocart": 188,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-10",
+    "revenue": 141480.5962,
+    "ordered_units": 59,
+    "hits_view": 35891,
+    "hits_tocart": 218,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-11",
+    "revenue": 189552.8762,
+    "ordered_units": 76,
+    "hits_view": 37632,
+    "hits_tocart": 207,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-12",
+    "revenue": 106596.999,
+    "ordered_units": 41,
+    "hits_view": 37169,
+    "hits_tocart": 201,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-13",
+    "revenue": 146919.9057,
+    "ordered_units": 62,
+    "hits_view": 33634,
+    "hits_tocart": 197,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-14",
+    "revenue": 156383.0946,
+    "ordered_units": 62,
+    "hits_view": 36512,
+    "hits_tocart": 232,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-15",
+    "revenue": 156584.4839,
+    "ordered_units": 64,
+    "hits_view": 37750,
+    "hits_tocart": 283,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-16",
+    "revenue": 127686.36,
+    "ordered_units": 57,
+    "hits_view": 36470,
+    "hits_tocart": 189,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-17",
+    "revenue": 163386.4406,
+    "ordered_units": 65,
+    "hits_view": 39218,
+    "hits_tocart": 215,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-18",
+    "revenue": 119525.0253,
+    "ordered_units": 51,
+    "hits_view": 35005,
+    "hits_tocart": 180,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-19",
+    "revenue": 133731.0744,
+    "ordered_units": 49,
+    "hits_view": 35794,
+    "hits_tocart": 168,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-20",
+    "revenue": 91428.3592,
+    "ordered_units": 37,
+    "hits_view": 32891,
+    "hits_tocart": 113,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-21",
+    "revenue": 129948.6303,
+    "ordered_units": 50,
+    "hits_view": 31892,
+    "hits_tocart": 191,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-22",
+    "revenue": 89457.6305,
+    "ordered_units": 36,
+    "hits_view": 30687,
+    "hits_tocart": 186,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-23",
+    "revenue": 95927.0061,
+    "ordered_units": 40,
+    "hits_view": 37647,
+    "hits_tocart": 161,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-24",
+    "revenue": 104736.8952,
+    "ordered_units": 44,
+    "hits_view": 42370,
+    "hits_tocart": 223,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-25",
+    "revenue": 115513.1702,
+    "ordered_units": 49,
+    "hits_view": 42292,
+    "hits_tocart": 227,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-26",
+    "revenue": 69214.4376,
+    "ordered_units": 27,
+    "hits_view": 41376,
+    "hits_tocart": 197,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-27",
+    "revenue": 133008.6943,
+    "ordered_units": 50,
+    "hits_view": 40044,
+    "hits_tocart": 205,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-28",
+    "revenue": 169595.3192,
+    "ordered_units": 64,
+    "hits_view": 40200,
+    "hits_tocart": 235,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-29",
+    "revenue": 150674.3745,
+    "ordered_units": 62,
+    "hits_view": 45826,
+    "hits_tocart": 272,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-30",
+    "revenue": 202659.2271,
+    "ordered_units": 81,
+    "hits_view": 41483,
+    "hits_tocart": 220,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-03-31",
+    "revenue": 195680.3462,
+    "ordered_units": 74,
+    "hits_view": 40469,
+    "hits_tocart": 220,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-01",
+    "revenue": 235765.4885,
+    "ordered_units": 88,
+    "hits_view": 41730,
+    "hits_tocart": 208,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-02",
+    "revenue": 293139.4744,
+    "ordered_units": 114,
+    "hits_view": 37830,
+    "hits_tocart": 207,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-03",
+    "revenue": 139205.2397,
+    "ordered_units": 55,
+    "hits_view": 35849,
+    "hits_tocart": 190,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-04",
+    "revenue": 146620.0282,
+    "ordered_units": 60,
+    "hits_view": 35090,
+    "hits_tocart": 176,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-05",
+    "revenue": 177684.905,
+    "ordered_units": 69,
+    "hits_view": 38417,
+    "hits_tocart": 200,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-06",
+    "revenue": 129311.3581,
+    "ordered_units": 49,
+    "hits_view": 34647,
+    "hits_tocart": 181,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-07",
+    "revenue": 123994.2019,
+    "ordered_units": 53,
+    "hits_view": 39025,
+    "hits_tocart": 211,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-08",
+    "revenue": 163781.8556,
+    "ordered_units": 64,
+    "hits_view": 39040,
+    "hits_tocart": 176,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-09",
+    "revenue": 108993.1684,
+    "ordered_units": 47,
+    "hits_view": 38029,
+    "hits_tocart": 159,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-10",
+    "revenue": 113869.8745,
+    "ordered_units": 45,
+    "hits_view": 36300,
+    "hits_tocart": 178,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-11",
+    "revenue": 114083.2613,
+    "ordered_units": 51,
+    "hits_view": 36319,
+    "hits_tocart": 230,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-12",
+    "revenue": 130275.7022,
+    "ordered_units": 54,
+    "hits_view": 34764,
+    "hits_tocart": 190,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-13",
+    "revenue": 123489.5553,
+    "ordered_units": 45,
+    "hits_view": 37517,
+    "hits_tocart": 202,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-14",
+    "revenue": 155506.7614,
+    "ordered_units": 62,
+    "hits_view": 38486,
+    "hits_tocart": 219,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-15",
+    "revenue": 126367.3575,
+    "ordered_units": 49,
+    "hits_view": 37347,
+    "hits_tocart": 220,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-16",
+    "revenue": 139773.6015,
+    "ordered_units": 57,
+    "hits_view": 36786,
+    "hits_tocart": 213,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-17",
+    "revenue": 114952.7025,
+    "ordered_units": 47,
+    "hits_view": 34362,
+    "hits_tocart": 173,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-18",
+    "revenue": 154326.5585,
+    "ordered_units": 61,
+    "hits_view": 39943,
+    "hits_tocart": 251,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-19",
+    "revenue": 126983.872,
+    "ordered_units": 48,
+    "hits_view": 36316,
+    "hits_tocart": 204,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-20",
+    "revenue": 189679.6105,
+    "ordered_units": 82,
+    "hits_view": 38977,
+    "hits_tocart": 252,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-21",
+    "revenue": 150889.3579,
+    "ordered_units": 55,
+    "hits_view": 39302,
+    "hits_tocart": 220,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-22",
+    "revenue": 164352.7892,
+    "ordered_units": 67,
+    "hits_view": 38391,
+    "hits_tocart": 246,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-23",
+    "revenue": 135902.2511,
+    "ordered_units": 54,
+    "hits_view": 40069,
+    "hits_tocart": 190,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-24",
+    "revenue": 101436.6199,
+    "ordered_units": 41,
+    "hits_view": 39847,
+    "hits_tocart": 215,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-25",
+    "revenue": 100709.2325,
+    "ordered_units": 40,
+    "hits_view": 40941,
+    "hits_tocart": 212,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-26",
+    "revenue": 75203.3665,
+    "ordered_units": 31,
+    "hits_view": 36450,
+    "hits_tocart": 193,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-27",
+    "revenue": 78908.1244,
+    "ordered_units": 26,
+    "hits_view": 30197,
+    "hits_tocart": 149,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-28",
+    "revenue": 79870.9506,
+    "ordered_units": 36,
+    "hits_view": 38746,
+    "hits_tocart": 188,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-29",
+    "revenue": 157890.7591,
+    "ordered_units": 53,
+    "hits_view": 35256,
+    "hits_tocart": 152,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-04-30",
+    "revenue": 61449.2484,
+    "ordered_units": 30,
+    "hits_view": 31801,
+    "hits_tocart": 134,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-01",
+    "revenue": 146107.4941,
+    "ordered_units": 56,
+    "hits_view": 29163,
+    "hits_tocart": 177,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-02",
+    "revenue": 108575.8599,
+    "ordered_units": 40,
+    "hits_view": 29059,
+    "hits_tocart": 226,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-03",
+    "revenue": 186062.2306,
+    "ordered_units": 62,
+    "hits_view": 36169,
+    "hits_tocart": 243,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-04",
+    "revenue": 91813.5066,
+    "ordered_units": 41,
+    "hits_view": 36364,
+    "hits_tocart": 167,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-05",
+    "revenue": 103056.6745,
+    "ordered_units": 35,
+    "hits_view": 38400,
+    "hits_tocart": 142,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-06",
+    "revenue": 156469.2648,
+    "ordered_units": 58,
+    "hits_view": 41672,
+    "hits_tocart": 174,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-07",
+    "revenue": 138094.6985,
+    "ordered_units": 53,
+    "hits_view": 42523,
+    "hits_tocart": 204,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-08",
+    "revenue": 98504.0884,
+    "ordered_units": 41,
+    "hits_view": 30180,
+    "hits_tocart": 139,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-09",
+    "revenue": 84005.3262,
+    "ordered_units": 35,
+    "hits_view": 34576,
+    "hits_tocart": 168,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-10",
+    "revenue": 114795.89140000001,
+    "ordered_units": 40,
+    "hits_view": 42344,
+    "hits_tocart": 201,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-11",
+    "revenue": 116777.6315,
+    "ordered_units": 39,
+    "hits_view": 63498,
+    "hits_tocart": 298,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-12",
+    "revenue": 93726.17599999999,
+    "ordered_units": 45,
+    "hits_view": 77970,
+    "hits_tocart": 281,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-13",
+    "revenue": 113101.08899999999,
+    "ordered_units": 51,
+    "hits_view": 67426,
+    "hits_tocart": 302,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-14",
+    "revenue": 98840.2906,
+    "ordered_units": 35,
+    "hits_view": 57164,
+    "hits_tocart": 239,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-15",
+    "revenue": 115168.9151,
+    "ordered_units": 38,
+    "hits_view": 57079,
+    "hits_tocart": 265,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-16",
+    "revenue": 117172.1459,
+    "ordered_units": 41,
+    "hits_view": 53144,
+    "hits_tocart": 285,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-17",
+    "revenue": 130270.0065,
+    "ordered_units": 57,
+    "hits_view": 53730,
+    "hits_tocart": 311,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-18",
+    "revenue": 112884.1708,
+    "ordered_units": 46,
+    "hits_view": 56320,
+    "hits_tocart": 256,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-19",
+    "revenue": 139706.9269,
+    "ordered_units": 49,
+    "hits_view": 63282,
+    "hits_tocart": 280,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-20",
+    "revenue": 113225.4965,
+    "ordered_units": 44,
+    "hits_view": 62984,
+    "hits_tocart": 283,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-21",
+    "revenue": 131294.0113,
+    "ordered_units": 53,
+    "hits_view": 67353,
+    "hits_tocart": 388,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-22",
+    "revenue": 163267.5074,
+    "ordered_units": 49,
+    "hits_view": 56739,
+    "hits_tocart": 250,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-23",
+    "revenue": 148925.7366,
+    "ordered_units": 58,
+    "hits_view": 56207,
+    "hits_tocart": 312,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-24",
+    "revenue": 162881.3854,
+    "ordered_units": 65,
+    "hits_view": 65280,
+    "hits_tocart": 287,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-25",
+    "revenue": 135835.6207,
+    "ordered_units": 50,
+    "hits_view": 65162,
+    "hits_tocart": 289,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-26",
+    "revenue": 137980.8705,
+    "ordered_units": 51,
+    "hits_view": 63403,
+    "hits_tocart": 252,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-27",
+    "revenue": 126845.6471,
+    "ordered_units": 45,
+    "hits_view": 56331,
+    "hits_tocart": 243,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-28",
+    "revenue": 163755.2846,
+    "ordered_units": 45,
+    "hits_view": 57398,
+    "hits_tocart": 261,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-29",
+    "revenue": 77318.4457,
+    "ordered_units": 21,
+    "hits_view": 45759,
+    "hits_tocart": 184,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-30",
+    "revenue": 83310.2604,
+    "ordered_units": 24,
+    "hits_view": 46854,
+    "hits_tocart": 171,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-05-31",
+    "revenue": 123032.5505,
+    "ordered_units": 34,
+    "hits_view": 51455,
+    "hits_tocart": 233,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-01",
+    "revenue": 194612.9794,
+    "ordered_units": 57,
+    "hits_view": 48259,
+    "hits_tocart": 220,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-02",
+    "revenue": 123874.4963,
+    "ordered_units": 43,
+    "hits_view": 60043,
+    "hits_tocart": 221,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-03",
+    "revenue": 179554.906,
+    "ordered_units": 76,
+    "hits_view": 96070,
+    "hits_tocart": 337,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-04",
+    "revenue": 162087.552,
+    "ordered_units": 61,
+    "hits_view": 149368,
+    "hits_tocart": 420,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-05",
+    "revenue": 162482.4074,
+    "ordered_units": 62,
+    "hits_view": 154609,
+    "hits_tocart": 313,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-06",
+    "revenue": 232022.6097,
+    "ordered_units": 69,
+    "hits_view": 120803,
+    "hits_tocart": 318,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-07",
+    "revenue": 144172.2262,
+    "ordered_units": 55,
+    "hits_view": 127944,
+    "hits_tocart": 360,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-08",
+    "revenue": 143635.58860000002,
+    "ordered_units": 42,
+    "hits_view": 50679,
+    "hits_tocart": 185,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-09",
+    "revenue": 145152.9209,
+    "ordered_units": 63,
+    "hits_view": 48887,
+    "hits_tocart": 192,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-10",
+    "revenue": 133099.0963,
+    "ordered_units": 44,
+    "hits_view": 53136,
+    "hits_tocart": 248,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-11",
+    "revenue": 143865.2224,
+    "ordered_units": 59,
+    "hits_view": 50338,
+    "hits_tocart": 262,
+    "returns_qty": 0
+  }
+]
