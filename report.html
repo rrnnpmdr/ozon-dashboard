@@ -1,570 +1,438 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Ozon 分析報表</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #0f0f13; color: #e0e0e0; padding: 16px;
-}
-.header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
-}
-.header h1 { font-size: 20px; font-weight: 600; color: #fff; }
-.header h1 span { color: #6c8cff; }
-.back-btn {
-  background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 8px;
-  padding: 8px 16px; color: #aaa; text-decoration: none; font-size: 13px; transition: all 0.2s;
-}
-.back-btn:hover { background: #2a2a3a; color: #fff; }
-
-.tabs {
-  display: flex; gap: 4px; margin-bottom: 16px; background: #1a1a24;
-  border-radius: 10px; padding: 4px; overflow-x: auto;
-}
-.tab-btn {
-  padding: 8px 16px; font-size: 13px; cursor: pointer; border: none;
-  background: transparent; color: #666; border-radius: 8px; white-space: nowrap;
-  transition: all 0.2s; flex-shrink: 0;
-}
-.tab-btn.active { background: #6c8cff; color: #fff; }
-.tab-btn:hover:not(.active) { color: #aaa; }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
-
-.spacer { height: 16px; }
-
-/* Stats row */
-.stats-row {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 8px; margin-bottom: 16px;
-}
-.stat-card {
-  background: #1a1a24; border-radius: 10px; padding: 12px;
-  border: 1px solid #2a2a3a;
-}
-.stat-card .label { font-size: 11px; color: #888; margin-bottom: 2px; }
-.stat-card .value { font-size: 18px; font-weight: 600; color: #fff; }
-.stat-card .sub { font-size: 11px; color: #666; margin-top: 2px; }
-.stat-card .chg-up { color: #51cf66; }
-.stat-card .chg-down { color: #ff6b6b; }
-.stat-card .chg-same { color: #888; }
-
-.chart-card {
-  background: #1a1a24; border-radius: 10px; padding: 12px;
-  border: 1px solid #2a2a3a; margin-bottom: 12px;
-}
-.chart-card h3 { font-size: 13px; color: #aaa; margin-bottom: 8px; font-weight: 500; }
-.chart-card canvas { max-height: 260px; height: 260px; width: 100% !important; }
-
-.data-table {
-  width: 100%; border-collapse: collapse; font-size: 12px;
-}
-.data-table th {
-  background: #14141e; color: #888; font-weight: 500;
-  padding: 8px 10px; text-align: left; white-space: nowrap;
-}
-.data-table td { padding: 6px 10px; border-top: 1px solid #22222e; }
-.data-table tr:hover td { background: #1e1e2c; }
-.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-
-.filters {
-  display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: flex-end;
-}
-.filter-group { display: flex; flex-direction: column; gap: 4px; }
-.filter-group label { font-size: 11px; color: #888; font-weight: 500; }
-.filter-group select, .filter-group input {
-  background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 8px;
-  padding: 6px 10px; color: #e0e0e0; font-size: 13px; min-width: 100px; outline: none;
-}
-.filter-group select:focus, .filter-group input:focus { border-color: #6c8cff; }
-
-.brand-bar {
-  display: flex; align-items: center; gap: 8px; padding: 6px 0;
-  border-bottom: 1px solid #22222e;
-}
-.brand-bar .name { min-width: 70px; font-size: 13px; font-weight: 500; color: #ddd; }
-.brand-bar .fill-wrap { flex: 1; height: 20px; background: #22222e; border-radius: 4px; overflow: hidden; }
-.brand-bar .fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
-.brand-bar .pct { min-width: 40px; text-align: right; font-size: 12px; color: #aaa; }
-.brand-bar .rev { min-width: 70px; text-align: right; font-size: 11px; color: #888; }
-
-@media (max-width: 768px) {
-  body { padding: 10px; }
-  .header h1 { font-size: 17px; }
-  .tab-btn { padding: 6px 12px; font-size: 12px; }
-  .stats-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .stat-card { padding: 8px; }
-  .stat-card .value { font-size: 15px; }
-  .chart-card canvas { max-height: 200px; height: 200px; }
-}
-@media (max-width: 480px) {
-  .stats-row { grid-template-columns: repeat(2, 1fr); }
-}
-</style>
-</head>
-<body>
-
-<div class="header">
-  <h1>📊 <span>Ozon</span> 分析報表</h1>
-  <a href="https://rrnnpmdr.github.io/ozon-dashboard/" class="back-btn">← 返回儀表板</a>
-</div>
-
-<div class="tabs">
-  <button class="tab-btn active" data-tab="monthly">📆 月報</button>
-  <button class="tab-btn" data-tab="daily">📅 日報</button>
-  <button class="tab-btn" data-tab="brands">🏷️ 品牌分析</button>
-</div>
-
-<!-- ═══ 月報 ═══ -->
-<div class="tab-content active" id="tab-monthly">
-  <div class="filters">
-    <div class="filter-group">
-      <label>選擇月份比較</label>
-      <select id="mCompare"><option value="">請選擇</option></select>
-    </div>
-  </div>
-
-  <div class="stats-row" id="monthlyStats"></div>
-
-  <div class="chart-card">
-    <h3>📈 月度銷售額趨勢</h3>
-    <canvas id="mRevenueChart"></canvas>
-  </div>
-  <div class="chart-card">
-    <h3>📊 月度銷量 & 活躍 SKU</h3>
-    <canvas id="mUnitsChart"></canvas>
-  </div>
-  <div class="chart-card">
-    <h3>📉 關鍵指標變化</h3>
-    <div class="table-scroll">
-      <table class="data-table" id="mDetailTable"></table>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ 日報 ═══ -->
-<div class="tab-content" id="tab-daily">
-  <div class="filters">
-    <div class="filter-group">
-      <label>選擇日期</label>
-      <select id="dDateFilter"><option value="">請選擇</option></select>
-    </div>
-  </div>
-
-  <div class="stats-row" id="dailyStats"></div>
-
-  <div class="chart-card">
-    <h3>🔥 今日 Top SKU 排行</h3>
-    <canvas id="dTopSkuChart"></canvas>
-  </div>
-  <div class="chart-card">
-    <h3>📋 今日各 SKU 表現</h3>
-    <div class="table-scroll">
-      <table class="data-table" id="dSkuTable"></table>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ 品牌分析 ═══ -->
-<div class="tab-content" id="tab-brands">
-  <div class="filters">
-    <div class="filter-group">
-      <label>選擇品牌</label>
-      <select id="bBrandFilter"><option value="all">全部品牌</option></select>
-    </div>
-  </div>
-
-  <div class="stats-row" id="brandStats"></div>
-
-  <div class="chart-card">
-    <h3>🏆 品牌銷售佔比</h3>
-    <canvas id="bPieChart"></canvas>
-  </div>
-  <div class="chart-card">
-    <h3>📈 Top 5 品牌月度趨勢</h3>
-    <canvas id="bTrendChart"></canvas>
-  </div>
-  <div class="chart-card">
-    <h3>📋 品牌詳細排名</h3>
-    <div id="bRankList"></div>
-  </div>
-</div>
-
-<script>
-const REPORT_URL = 'https://rrnnpmdr.github.io/ozon-dashboard/report.json';
-
-let reportData = null;
-let chartInstances = {};
-const monthLabels = {'2026-02':'2月','2026-03':'3月','2026-04':'4月','2026-05':'5月','2026-06':'6月','2026-07':'7月'};
-const brandColors = ['#6c8cff','#ff6b6b','#ffb86c','#51cf66','#cc5de8','#20c997','#fcc419','#ff922b','#748ffc','#e599f7'];
-
-async function loadData() {
-  try {
-    const r = await fetch(REPORT_URL);
-    reportData = await r.json();
-    initFilters();
-    renderMonthly();
-    renderDaily();
-    renderBrands();
-  } catch(e) {
-    document.body.innerHTML = `<div style="padding:40px;text-align:center;color:#ff6b6b;">
-      ❌ 加載數據失敗: ${e.message}<br><br>
-      <a href="#" onclick="location.reload()" style="color:#6c8cff;">重新加載</a>
-    </div>`;
-  }
-}
-
-function initFilters() {
-  // Month compare
-  const mSel = document.getElementById('mCompare');
-  reportData.monthly.forEach(m => {
-    const o = document.createElement('option'); o.value = m.month; o.textContent = m.label; mSel.appendChild(o);
-  });
-  // Date filter
-  const dSel = document.getElementById('dDateFilter');
-  // Get all dates from raw data
-  fetch('https://rrnnpmdr.github.io/ozon-dashboard/daily.json').then(r => r.json()).then(daily => {
-    daily.forEach(d => {
-      const o = document.createElement('option'); o.value = d.date; o.textContent = d.date; dSel.appendChild(o);
-    });
-    if (daily.length > 0) dSel.value = daily[daily.length-1].date;
-    renderDaily();
-  }).catch(() => {});
-  // Brand filter
-  const bSel = document.getElementById('bBrandFilter');
-  reportData.brand_ranking.forEach(b => {
-    const o = document.createElement('option'); o.value = b.brand; o.textContent = b.brand; bSel.appendChild(o);
-  });
-}
-
-// ════ Tabs ════
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-  });
-});
-
-// ════ Monthly Report ════
-function renderMonthly() {
-  const data = reportData.monthly;
-  if (!data || data.length === 0) return;
-
-  const latest = data[data.length - 1];
-  const totalRev = data.reduce((s,d) => s + d.revenue, 0);
-  const totalUnits = data.reduce((s,d) => s + d.units, 0);
-
-  // Stats cards
-  document.getElementById('monthlyStats').innerHTML = `
-    <div class="stat-card">
-      <div class="label">最新月份</div>
-      <div class="value">${latest.label}</div>
-      <div class="sub">${latest.month}</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">月銷售額</div>
-      <div class="value">₽${(latest.revenue/1000000).toFixed(2)}M</div>
-      <div class="sub">${latest.revenue.toLocaleString('ru-RU', {minimumFractionDigits:2})} ₽</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">月銷量</div>
-      <div class="value">${latest.units.toLocaleString()} 件</div>
-      <div class="sub">${latest.skus} 個活躍 SKU</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">環比變化</div>
-      <div class="value ${latest.change_rev > 0 ? 'chg-up' : latest.change_rev < 0 ? 'chg-down' : 'chg-same'}">
-        ${latest.change_rev !== null ? (latest.change_rev > 0 ? '↑' : '↓') + ' ' + Math.abs(latest.change_rev).toFixed(1) + '%' : '—'}
-      </div>
-      <div class="sub">vs 上月銷售額</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">客單價</div>
-      <div class="value">₽${latest.aov.toLocaleString('ru-RU', {minimumFractionDigits:2})}</div>
-      <div class="sub">加購率 ${latest.cart_rate}%</div>
-    </div>
-  `;
-
-  // Revenue chart
-  renderMChart('mRevenueChart', 'bar', data.map(d => d.label), [
-    { label: '銷售額 (₽)', data: data.map(d => d.revenue), backgroundColor: 'rgba(108,140,255,0.7)', borderRadius: 3, borderSkipped: false, yAxisID: 'y' },
-    { label: '銷售額變化 %', data: data.map(d => d.change_rev || 0), type: 'line', borderColor: '#ffb86c', backgroundColor: 'rgba(255,184,108,0.1)', fill: true, tension: 0.3, pointRadius: 4, yAxisID: 'y1', order: 1 }
-  ], {
-    y: { type: 'linear', position: 'left', ticks: { color: '#888', callback: v => v>=1000000 ? (v/1000000).toFixed(1)+'M' : v>=1000 ? (v/1000).toFixed(0)+'K' : v }, grid: { color: '#22222e' } },
-    y1: { type: 'linear', position: 'right', ticks: { color: '#ffb86c', callback: v => v+'%' }, grid: { display: false } }
-  });
-
-  // Units + SKUs chart
-  renderMChart('mUnitsChart', 'bar', data.map(d => d.label), [
-    { label: '銷量 (件)', data: data.map(d => d.units), backgroundColor: 'rgba(81,207,102,0.7)', borderRadius: 3, borderSkipped: false, yAxisID: 'y' },
-    { label: '活躍 SKU', data: data.map(d => d.skus), type: 'line', borderColor: '#cc5de8', backgroundColor: 'rgba(204,93,232,0.1)', fill: true, tension: 0.3, pointRadius: 4, yAxisID: 'y1', order: 1 }
-  ], {
-    y: { type: 'linear', position: 'left', ticks: { color: '#888' }, grid: { color: '#22222e' } },
-    y1: { type: 'linear', position: 'right', ticks: { color: '#cc5de8' }, grid: { display: false } }
-  });
-
-  // Detail table
-  const mTable = document.getElementById('mDetailTable');
-  mTable.innerHTML = `<thead><tr>
-    <th>月份</th><th>銷售額 (₽)</th><th>銷量</th><th>活躍SKU</th>
-    <th>客單價</th><th>加購率</th><th>瀏覽量</th><th>環比銷售</th><th>環比銷量</th>
-  </tr></thead><tbody>
-    ${data.map(m => `
-      <tr>
-        <td>${m.label}</td>
-        <td>₽${m.revenue.toLocaleString('ru-RU', {minimumFractionDigits:2})}</td>
-        <td>${m.units.toLocaleString()}</td>
-        <td>${m.skus}</td>
-        <td>₽${m.aov.toLocaleString('ru-RU', {minimumFractionDigits:2})}</td>
-        <td>${m.cart_rate}%</td>
-        <td>${m.views.toLocaleString()}</td>
-        <td class="${m.change_rev > 0 ? 'chg-up' : m.change_rev < 0 ? 'chg-down' : 'chg-same'}">
-          ${m.change_rev !== null ? (m.change_rev > 0 ? '↑' : '↓') + ' ' + Math.abs(m.change_rev).toFixed(1) + '%' : '—'}
-        </td>
-        <td class="${m.change_units > 0 ? 'chg-up' : m.change_units < 0 ? 'chg-down' : 'chg-same'}">
-          ${m.change_units !== null ? (m.change_units > 0 ? '↑' : '↓') + ' ' + Math.abs(m.change_units).toFixed(1) + '%' : '—'}
-        </td>
-      </tr>
-    `).join('')}
-  </tbody>`;
-
-  // Compare month
-  document.getElementById('mCompare').addEventListener('change', function() {
-    if (!this.value) return;
-    const target = data.find(m => m.month === this.value);
-    if (!target) return;
-    alert(
-      `📆 ${target.label} 對比 ${latest.label}\n\n` +
-      `銷售額: ₽${target.revenue.toLocaleString('ru-RU', {minimumFractionDigits:2})}  →  ₽${latest.revenue.toLocaleString('ru-RU', {minimumFractionDigits:2})}\n` +
-      `變化: ${target.change_rev !== null ? (latest.revenue - target.revenue > 0 ? '↑' : '↓') + ' ' + Math.abs(((latest.revenue - target.revenue) / target.revenue * 100)).toFixed(1) + '%' : '—'}\n\n` +
-      `銷量: ${target.units}  →  ${latest.units}\n` +
-      `變化: ${target.change_units !== null ? (latest.units - target.units > 0 ? '↑' : '↓') + ' ' + Math.abs(((latest.units - target.units) / target.units * 100)).toFixed(1) + '%' : '—'}\n\n` +
-      `活躍SKU: ${target.skus}  →  ${latest.skus}\n` +
-      `客單價: ₽${target.aov.toLocaleString('ru-RU', {minimumFractionDigits:2})}  →  ₽${latest.aov.toLocaleString('ru-RU', {minimumFractionDigits:2})}\n` +
-      `加購率: ${target.cart_rate}%  →  ${latest.cart_rate}%`
-    );
-  });
-}
-
-function renderMChart(canvasId, type, labels, datasets, scales) {
-  const ctx = document.getElementById(canvasId).getContext('2d');
-  if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
-  chartInstances[canvasId] = new Chart(ctx, {
-    type,
-    data: { labels, datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { labels: { color: '#888', usePointStyle: true, padding: 12, font: { size: 11 } } },
-        tooltip: { backgroundColor: '#1a1a24', titleColor: '#e0e0e0', bodyColor: '#ccc', borderColor: '#2a2a3a', borderWidth: 1, padding: 8 }
-      },
-      scales
-    }
-  });
-}
-
-// ════ Daily Report ════
-async function renderDaily() {
-  if (!reportData || !reportData.today) return;
-  const t = reportData.today;
-  const y = reportData.yesterday;
-  const top = reportData.top_skus || [];
-
-  const chgRev = y ? ((t.revenue - y.revenue) / y.revenue * 100) : null;
-  const chgUnits = y ? ((t.units - y.units) / y.units * 100) : null;
-
-  document.getElementById('dailyStats').innerHTML = `
-    <div class="stat-card">
-      <div class="label">日期</div>
-      <div class="value">${t.date}</div>
-      <div class="sub">最新數據</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">銷售額</div>
-      <div class="value">₽${(t.revenue/1000).toFixed(1)}K</div>
-      <div class="sub">${t.revenue.toLocaleString('ru-RU', {minimumFractionDigits:2})} ₽</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">銷量</div>
-      <div class="value">${t.units} 件</div>
-      <div class="sub">${t.skus} 個SKU有銷量</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">vs 昨日</div>
-      <div class="value ${chgRev > 0 ? 'chg-up' : chgRev < 0 ? 'chg-down' : 'chg-same'}">
-        ${chgRev !== null ? (chgRev > 0 ? '↑' : '↓') + ' ' + Math.abs(chgRev).toFixed(1) + '%' : '—'}
-      </div>
-      <div class="sub">${chgUnits !== null ? '銷量 ' + (chgUnits > 0 ? '↑' : '↓') + ' ' + Math.abs(chgUnits).toFixed(1) + '%' : ''}</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">客單價</div>
-      <div class="value">₽${t.aov.toLocaleString('ru-RU', {minimumFractionDigits:2})}</div>
-      <div class="sub">加購率 ${t.cart_rate}%</div>
-    </div>
-  `;
-
-  // Top SKUs chart
-  if (top.length > 0) {
-    const ctx = document.getElementById('dTopSkuChart').getContext('2d');
-    if (chartInstances.dTopSkuChart) chartInstances.dTopSkuChart.destroy();
-    const names = top.map(s => (s.offer_id || '').length > 20 ? (s.offer_id || '').substring(0,18)+'…' : (s.offer_id || '—'));
-    chartInstances.dTopSkuChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: names,
-        datasets: [
-          { label: '銷售額 (₽)', data: top.map(s => s.revenue), backgroundColor: '#6c8cff', borderRadius: 3, borderSkipped: false },
-          { label: '銷量', data: top.map(s => s.units), backgroundColor: '#ffb86c', borderRadius: 3, borderSkipped: false }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-        plugins: {
-          legend: { labels: { color: '#888', usePointStyle: true, padding: 12, font: { size: 11 } } },
-          tooltip: { backgroundColor: '#1a1a24', titleColor: '#e0e0e0', bodyColor: '#ccc', borderColor: '#2a2a3a', borderWidth: 1, padding: 8, callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.x || 0).toLocaleString('ru-RU') } }
-        },
-        scales: {
-          x: { ticks: { color: '#888', callback: v => v>=1000 ? (v/1000).toFixed(0)+'K' : v }, grid: { color: '#22222e' } },
-          y: { ticks: { color: '#888', font: { size: 9 } }, grid: { display: false } }
-        }
-      }
-    });
-  }
-
-  // SKU table
-  const dTable = document.getElementById('dSkuTable');
-  dTable.innerHTML = `<thead><tr>
-    <th>#</th><th>offer_id</th><th>品牌</th><th>銷售額</th><th>銷量</th>
-    <th>加購率</th><th>轉化率</th>
-  </tr></thead><tbody>
-    ${top.map((s, i) => `
-      <tr>
-        <td>${i+1}</td>
-        <td>${s.offer_id || '—'}</td>
-        <td>${s.brand || '—'}</td>
-        <td>₽${s.revenue.toLocaleString('ru-RU', {minimumFractionDigits:2})}</td>
-        <td>${s.units}</td>
-        <td>${s.cart_rate}%</td>
-        <td>${s.conversion}%</td>
-      </tr>
-    `).join('')}
-  </tbody>`;
-}
-
-// ════ Brand Analysis ════
-function renderBrands() {
-  const brands = reportData.brand_ranking;
-  const trend = reportData.brand_trend || {};
-  if (!brands || brands.length === 0) return;
-
-  const totalRev = brands.reduce((s,b) => s + b.revenue, 0);
-  const top5 = brands.slice(0, 5);
-
-  document.getElementById('brandStats').innerHTML = `
-    <div class="stat-card">
-      <div class="label">總品牌數</div>
-      <div class="value">${brands.length}</div>
-      <div class="sub">有銷售記錄</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">TOP 1</div>
-      <div class="value">${brands[0].brand}</div>
-      <div class="sub">₽${(brands[0].revenue/1000000).toFixed(2)}M · ${brands[0].pct}%</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">TOP 5 總佔比</div>
-      <div class="value">${top5.reduce((s,b) => s + b.pct, 0).toFixed(1)}%</div>
-      <div class="sub">₽${(top5.reduce((s,b) => s + b.revenue, 0)/1000000).toFixed(2)}M</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">品牌平均銷售</div>
-      <div class="value">₽${(totalRev/brands.length/1000).toFixed(0)}K</div>
-      <div class="sub">${brands.filter(b => b.revenue > 100000).length} 個品牌 >10萬₽</div>
-    </div>
-  `;
-
-  // Pie chart
-  const pieLabels = top5.map(b => b.brand);
-  const pieData = top5.map(b => b.revenue);
-  if (brands.length > 5) {
-    pieLabels.push('其他');
-    pieData.push(brands.slice(5).reduce((s,b) => s + b.revenue, 0));
-  }
-  const ctx = document.getElementById('bPieChart').getContext('2d');
-  if (chartInstances.bPieChart) chartInstances.bPieChart.destroy();
-  chartInstances.bPieChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: brandColors.slice(0, pieLabels.length), borderWidth: 0 }] },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'right', labels: { color: '#888', padding: 10, font: { size: 11 } } },
-        tooltip: { backgroundColor: '#1a1a24', titleColor: '#e0e0e0', bodyColor: '#ccc', borderColor: '#2a2a3a', borderWidth: 1, callbacks: { label: ctx => { const total = ctx.dataset.data.reduce((a,b)=>a+b,0); const pct = ((ctx.parsed/total)*100).toFixed(1); return ctx.label + ': ₽' + ctx.parsed.toLocaleString() + ' (' + pct + '%)'; } } }
-      }
-    }
-  });
-
-  // Brand trend chart (top 5)
-  const trendLabels = reportData.monthly.map(m => m.label);
-  const colors = ['#6c8cff','#ff6b6b','#ffb86c','#51cf66','#cc5de8'];
-  const trendDatasets = top5.map((b, i) => {
-    const bd = trend[b.brand] || [];
-    const dataMap = {};
-    bd.forEach(d => { dataMap[d.month] = d.revenue; });
-    return {
-      label: b.brand,
-      data: trendLabels.map(m => dataMap[m] || 0),
-      borderColor: colors[i],
-      backgroundColor: colors[i] + '20',
-      fill: false,
-      tension: 0.3,
-      pointRadius: 3
-    };
-  });
-  const ctx2 = document.getElementById('bTrendChart').getContext('2d');
-  if (chartInstances.bTrendChart) chartInstances.bTrendChart.destroy();
-  chartInstances.bTrendChart = new Chart(ctx2, {
-    type: 'line',
-    data: { labels: trendLabels, datasets: trendDatasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { labels: { color: '#888', usePointStyle: true, padding: 12, font: { size: 11 } } },
-        tooltip: { backgroundColor: '#1a1a24', titleColor: '#e0e0e0', bodyColor: '#ccc', borderColor: '#2a2a3a', borderWidth: 1, padding: 8, callbacks: { label: ctx => ctx.dataset.label + ': ₽' + (ctx.parsed.y || 0).toLocaleString('ru-RU') } }
-      },
-      scales: {
-        x: { ticks: { color: '#666' }, grid: { color: '#22222e' } },
-        y: { type: 'linear', ticks: { color: '#888', callback: v => v>=1000000 ? (v/1000000).toFixed(1)+'M' : v>=1000 ? (v/1000).toFixed(0)+'K' : v }, grid: { color: '#22222e' } }
-      }
-    }
-  });
-
-  // Brand ranking list
-  const rank = document.getElementById('bRankList');
-  const maxRev = brands[0].revenue;
-  rank.innerHTML = brands.map(b => `
-    <div class="brand-bar">
-      <span class="name" style="color:${b.pct >= 10 ? '#fff' : '#aaa'}">${b.brand}</span>
-      <div class="fill-wrap">
-        <div class="fill" style="width:${(b.revenue/maxRev*100).toFixed(1)}%; background:${brandColors[brands.indexOf(b) % brandColors.length]}"></div>
-      </div>
-      <span class="pct">${b.pct}%</span>
-      <span class="rev">₽${(b.revenue/1000).toFixed(0)}K</span>
-    </div>
-  `).join('');
-}
-
-loadData();
-</script>
-</body>
-</html>
+     1|<!DOCTYPE html>
+     2|<html lang="zh-CN">
+     3|<head>
+     4|<meta charset="UTF-8">
+     5|<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+     6|<title>Ozon 深度分析報表</title>
+     7|<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+     8|<style>
+     9|*{margin:0;padding:0;box-sizing:border-box}
+    10|body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f13;color:#e0e0e0;padding:16px}
+    11|.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+    12|.header h1{font-size:20px;font-weight:600;color:#fff}
+    13|.header h1 span{color:#6c8cff}
+    14|.back-btn{background:#1a1a24;border:1px solid #2a2a3a;border-radius:8px;padding:8px 16px;color:#aaa;text-decoration:none;font-size:13px;transition:all .2s}
+    15|.back-btn:hover{background:#2a2a3a;color:#fff}
+    16|.tabs{display:flex;gap:4px;margin-bottom:16px;background:#1a1a24;border-radius:10px;padding:4px;overflow-x:auto}
+    17|.tab-btn{padding:8px 16px;font-size:13px;cursor:pointer;border:none;background:transparent;color:#666;border-radius:8px;white-space:nowrap;transition:all .2s;flex-shrink:0}
+    18|.tab-btn.active{background:#6c8cff;color:#fff}
+    19|.tab-btn:hover:not(.active){color:#aaa}
+    20|.tab-content{display:none}
+    21|.tab-content.active{display:block}
+    22|.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:16px}
+    23|.stat-card{background:#1a1a24;border-radius:10px;padding:12px;border:1px solid #2a2a3a}
+    24|.stat-card .label{font-size:11px;color:#888;margin-bottom:2px}
+    25|.stat-card .value{font-size:18px;font-weight:600;color:#fff}
+    26|.stat-card .sub{font-size:11px;color:#666;margin-top:2px}
+    27|.stat-card .chg-up{color:#51cf66}
+    28|.stat-card .chg-down{color:#ff6b6b}
+    29|.chart-card{background:#1a1a24;border-radius:10px;padding:12px;border:1px solid #2a2a3a;margin-bottom:12px}
+    30|.chart-card h3{font-size:13px;color:#aaa;margin-bottom:8px;font-weight:500}
+    31|.chart-card canvas{max-height:260px;height:260px;width:100%!important}
+    32|.chart-card p{font-size:12px;color:#888;line-height:1.6;padding:4px 0}
+    33|.chart-card .highlight{color:#6c8cff;font-weight:600}
+    34|.chart-card .danger{color:#ff6b6b;font-weight:600}
+    35|.chart-card .success{color:#51cf66;font-weight:600}
+    36|.data-table{width:100%;border-collapse:collapse;font-size:12px}
+    37|.data-table th{background:#14141e;color:#888;font-weight:500;padding:7px 8px;text-align:left;white-space:nowrap}
+    38|.data-table td{padding:6px 8px;border-top:1px solid #22222e}
+    39|.data-table tr:hover td{background:#1e1e2c}
+    40|.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    41|.filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-end}
+    42|.filter-group{display:flex;flex-direction:column;gap:4px}
+    43|.filter-group label{font-size:11px;color:#888;font-weight:500}
+    44|.filter-group select,.filter-group input{background:#1a1a24;border:1px solid #2a2a3a;border-radius:8px;padding:6px 10px;color:#e0e0e0;font-size:13px;min-width:100px;outline:none}
+    45|.filter-group select:focus{border-color:#6c8cff}
+    46|.insight-box{background:linear-gradient(135deg,#1a1a24,#1a1a30);border:1px solid #2a2a3a;border-radius:10px;padding:12px;margin-bottom:12px}
+    47|.insight-box h4{font-size:13px;color:#6c8cff;margin-bottom:6px}
+    48|.insight-box p{font-size:12px;color:#aaa;line-height:1.7}
+    49|@media(max-width:768px){body{padding:10px}.header h1{font-size:17px}.tab-btn{padding:6px 12px;font-size:12px}.stats-row{grid-template-columns:repeat(3,1fr);gap:6px}.stat-card{padding:8px}.stat-card .value{font-size:15px}.chart-card canvas{max-height:200px;height:200px}}
+    50|@media(max-width:480px){.stats-row{grid-template-columns:repeat(2,1fr)}}
+    51|</style>
+    52|</head>
+    53|<body>
+    54|
+    55|<div class="header">
+    56|  <h1>📊 <span>Ozon</span> 深度分析報表</h1>
+    57|  <a href="https://rrnnpmdr.github.io/ozon-dashboard/" class="back-btn">← 返回儀表板</a>
+    58|</div>
+    59|
+    60|<div class="tabs">
+    61|  <button class="tab-btn active" data-tab="overview">📋 總覽</button>
+    62|  <button class="tab-btn" data-tab="brands">🏷️ 品牌明細</button>
+    63|  <button class="tab-btn" data-tab="skus">📦 SKU 診斷</button>
+    64|  <button class="tab-btn" data-tab="growth">📈 增長分析</button>
+    65|</div>
+    66|
+    67|<div class="tab-content active" id="tab-overview"></div>
+    68|<div class="tab-content" id="tab-brands"></div>
+    69|<div class="tab-content" id="tab-skus"></div>
+    70|<div class="tab-content" id="tab-growth"></div>
+    71|
+    72|<script>
+    73|// ── Embedded Data (2026 Feb - Jun 11) ──
+    74|const BRANDS = [{"brand": "FANCL", "feb": 2489479.5, "mar": 3315999.22, "apr": 3183771.74, "may": 2792635.55, "jun": 1294151.18, "total": 13076037.18, "units": 4715, "skus": 39, "aov": 2773.28, "cart_rate": 0.5, "conv": 0.134}, {"brand": "CENTRUM", "feb": 720640.27, "mar": 825086.3, "apr": 589550.88, "may": 445653.55, "jun": 196560.56, "total": 2777491.55, "units": 1324, "skus": 21, "aov": 2097.8, "cart_rate": 0.4, "conv": 0.124}, {"brand": "Lacto-fit", "feb": 79098.43, "mar": 150191.91, "apr": 181740.47, "may": 222819.71, "jun": 76030.9, "total": 709881.42, "units": 366, "skus": 8, "aov": 1939.57, "cart_rate": 0.7, "conv": 0.098}, {"brand": "Asahi", "feb": 15565.04, "mar": 22243.68, "apr": 57081.61, "may": 101945.11, "jun": 45572.16, "total": 242407.6, "units": 77, "skus": 14, "aov": 3148.15, "cart_rate": 0.5, "conv": 0.083}, {"brand": "Earth", "feb": 0.0, "mar": 0.0, "apr": 23882.16, "may": 55464.47, "jun": 71914.88, "total": 151261.51, "units": 79, "skus": 10, "aov": 1914.7, "cart_rate": 0.8, "conv": 0.17}, {"brand": "DHC", "feb": 25315.54, "mar": 32311.35, "apr": 18756.23, "may": 20598.01, "jun": 13651.45, "total": 110632.58, "units": 115, "skus": 9, "aov": 962.02, "cart_rate": 0.6, "conv": 0.097}, {"brand": "Kobayashi", "feb": 20613.12, "mar": 28722.43, "apr": 16328.86, "may": 27006.92, "jun": 2860.93, "total": 95532.25, "units": 24, "skus": 2, "aov": 3980.51, "cart_rate": 0.8, "conv": 0.099}, {"brand": "foodology", "feb": 0.0, "mar": 0.0, "apr": 15032.69, "may": 54726.75, "jun": 19077.53, "total": 88836.97, "units": 53, "skus": 4, "aov": 1676.17, "cart_rate": 0.3, "conv": 0.042}, {"brand": "KissMe", "feb": 7725.84, "mar": 8098.09, "apr": 5547.07, "may": 3025.84, "jun": 1512.18, "total": 25909.02, "units": 33, "skus": 1, "aov": 785.12, "cart_rate": 0.7, "conv": 0.082}, {"brand": "Ettusais", "feb": 3072.15, "mar": 1248.55, "apr": 2445.13, "may": 4181.72, "jun": 1799.7, "total": 12747.25, "units": 21, "skus": 1, "aov": 607.01, "cart_rate": 0.4, "conv": 0.032}, {"brand": "Caltrate", "feb": 0.0, "mar": 4361.61, "apr": 4204.39, "may": 0.0, "jun": 2862.18, "total": 11428.17, "units": 6, "skus": 3, "aov": 1904.7, "cart_rate": 0.3, "conv": 0.085}, {"brand": "Move Free", "feb": 0.0, "mar": 0.0, "apr": 4609.61, "may": 5018.8, "jun": 0.0, "total": 9628.41, "units": 2, "skus": 2, "aov": 4814.2, "cart_rate": 0.6, "conv": 0.104}, {"brand": "Puritan's Pride", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 3645.67, "jun": 2770.45, "total": 6416.11, "units": 2, "skus": 5, "aov": 3208.06, "cart_rate": 0.2, "conv": 0.053}, {"brand": "Jamieson", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 2514.32, "jun": 3424.8, "total": 5939.12, "units": 2, "skus": 7, "aov": 2969.56, "cart_rate": 0.1, "conv": 0.034}, {"brand": "Vlyco", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 3541.97, "jun": 0.0, "total": 3541.97, "units": 2, "skus": 3, "aov": 1770.99, "cart_rate": 0.1, "conv": 0.011}, {"brand": "Нет бренда", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 3203.28, "jun": 0.0, "total": 3203.28, "units": 1, "skus": 1, "aov": 3203.28, "cart_rate": 0.2, "conv": 0.072}, {"brand": "Kate", "feb": 1231.21, "mar": 0.0, "apr": 1909.97, "may": 0.0, "jun": 0.0, "total": 3141.17, "units": 5, "skus": 2, "aov": 628.23, "cart_rate": 0.1, "conv": 0.021}, {"brand": "L'il Critters", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 3076.14, "jun": 0.0, "total": 3076.14, "units": 1, "skus": 1, "aov": 3076.14, "cart_rate": 0.4, "conv": 0.107}, {"brand": "Kerastase", "feb": 0.0, "mar": 0.0, "apr": 2958.11, "may": 0.0, "jun": 0.0, "total": 2958.11, "units": 1, "skus": 4, "aov": 2958.11, "cart_rate": 0.3, "conv": 0.006}, {"brand": "Swisse", "feb": 0.0, "mar": 0.0, "apr": 2940.42, "may": 0.0, "jun": 0.0, "total": 2940.42, "units": 1, "skus": 1, "aov": 2940.42, "cart_rate": 0.4, "conv": 0.089}, {"brand": "Stada", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 2934.05, "total": 2934.05, "units": 1, "skus": 2, "aov": 2934.05, "cart_rate": 0.5, "conv": 0.03}, {"brand": "3ce", "feb": 0.0, "mar": 0.0, "apr": 1459.36, "may": 0.0, "jun": 0.0, "total": 1459.36, "units": 1, "skus": 22, "aov": 1459.36, "cart_rate": 0.1, "conv": 0.003}, {"brand": "vitafusion", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 0.0, "total": 0.0, "units": 0, "skus": 1, "aov": null, "cart_rate": 0.0, "conv": 0.0}, {"brand": "YUHADA", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 0.0, "total": 0.0, "units": 0, "skus": 2, "aov": null, "cart_rate": 0.0, "conv": 0.0}, {"brand": "OLLY", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 0.0, "total": 0.0, "units": 0, "skus": 1, "aov": null, "cart_rate": 0.2, "conv": 0.0}, {"brand": "Kaminomoto", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 0.0, "total": 0.0, "units": 0, "skus": 1, "aov": null, "cart_rate": 0.4, "conv": 0.0}, {"brand": "Gucci", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 0.0, "total": 0.0, "units": 0, "skus": 6, "aov": null, "cart_rate": 0.1, "conv": 0.0}, {"brand": "Florasis", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 0.0, "total": 0.0, "units": 0, "skus": 12, "aov": null, "cart_rate": 0.3, "conv": 0.0}, {"brand": "BANDAI SPIRITS", "feb": 0.0, "mar": 0.0, "apr": 0.0, "may": 0.0, "jun": 0.0, "total": 0.0, "units": 0, "skus": 1, "aov": null, "cart_rate": 0.0, "conv": 0.0}];
+    75|const TOP_SKUS = [{"offer_id": "Fancl women 40+", "brand": "FANCL", "apr": 563240.46, "may": 272699.7, "jun": 121856.75, "total": 1892432.38, "units": 628}, {"offer_id": "Fancl women 50+", "brand": "FANCL", "apr": 429709.51, "may": 120451.69, "jun": 91277.58, "total": 1520791.35, "units": 478}, {"offer_id": "Fancl women 60+", "brand": "FANCL", "apr": 385671.18, "may": 0.0, "jun": 56455.63, "total": 1323583.72, "units": 379}, {"offer_id": "Fancl women 30+", "brand": "FANCL", "apr": 230786.3, "may": 149546.82, "jun": 31299.7, "total": 1000901.55, "units": 521}, {"offer_id": "Fancl Men 50+", "brand": "FANCL", "apr": 258878.0, "may": 182172.73, "jun": 96266.31, "total": 974461.04, "units": 310}, {"offer_id": "Fancl Men 40+", "brand": "FANCL", "apr": 214936.84, "may": 232230.41, "jun": 101868.27, "total": 822372.2, "units": 269}, {"offer_id": "Fancl Men 30+", "brand": "FANCL", "apr": 164138.53, "may": 148473.08, "jun": 60468.8, "total": 759611.07, "units": 408}, {"offer_id": "FANCL-Women-50-Plus-90", "brand": "FANCL", "apr": 62981.41, "may": 365987.65, "jun": 134100.67, "total": 727655.14, "units": 81}, {"offer_id": "Fancl Men 60+", "brand": "FANCL", "apr": 144426.82, "may": 183674.16, "jun": 36388.18, "total": 637427.45, "units": 187}, {"offer_id": "FANCL-Women-40-Plus-90", "brand": "FANCL", "apr": 92606.24, "may": 329012.16, "jun": 108313.08, "total": 624737.94, "units": 74}, {"offer_id": "FANCL-Women-60-Plus-90", "brand": "FANCL", "apr": 77815.97, "may": 237674.95, "jun": 64129.99, "total": 555465.28, "units": 57}, {"offer_id": "Fancl Women 20+", "brand": "FANCL", "apr": 94279.08, "may": 96154.03, "jun": 38177.11, "total": 474256.18, "units": 334}, {"offer_id": "Centrum Sliver men 100", "brand": "CENTRUM", "apr": 93089.24, "may": 53448.38, "jun": 42120.0, "total": 458852.11, "units": 313}, {"offer_id": "Centrum Sliver men 275", "brand": "CENTRUM", "apr": 73556.58, "may": 58720.95, "jun": 23438.16, "total": 384076.94, "units": 126}, {"offer_id": "Centrum Sliver women 100", "brand": "CENTRUM", "apr": 69723.58, "may": 41097.58, "jun": 32364.81, "total": 308207.89, "units": 209}, {"offer_id": "Centrum Sliver Women 275", "brand": "CENTRUM", "apr": 40371.94, "may": 55865.79, "jun": 32046.95, "total": 287917.65, "units": 94}, {"offer_id": "Centrum Men 120", "brand": "CENTRUM", "apr": 68781.8, "may": 45996.15, "jun": 18268.54, "total": 280724.26, "units": 193}, {"offer_id": "LACTOFIT-Pink-60", "brand": "Lacto-fit", "apr": 74595.51, "may": 88935.23, "jun": 25257.47, "total": 264867.05, "units": 133}, {"offer_id": "Fancl Men 20+", "brand": "FANCL", "apr": 48568.72, "may": 37401.54, "jun": 19020.96, "total": 221232.74, "units": 155}, {"offer_id": "FANCL-Women-30-Plus-90", "brand": "FANCL", "apr": 23210.43, "may": 72822.93, "jun": 61018.73, "total": 221082.69, "units": 38}, {"offer_id": "Centrum Men 200", "brand": "CENTRUM", "apr": 48453.77, "may": 28463.9, "jun": 19042.19, "total": 217538.46, "units": 81}, {"offer_id": "Centrum Sliver men 200", "brand": "CENTRUM", "apr": 54086.25, "may": 44251.95, "jun": 7771.01, "total": 189167.5, "units": 70}, {"offer_id": "Centrum Sliver Women 200", "brand": "CENTRUM", "apr": 40410.89, "may": 33501.44, "jun": 5220.93, "total": 147446.0, "units": 55}, {"offer_id": "Fancl Brain 120", "brand": "FANCL", "apr": 53270.63, "may": 33092.23, "jun": 10876.19, "total": 147252.62, "units": 39}, {"offer_id": "Lacto-Fit-Yellow", "brand": "Lacto-fit", "apr": 41834.88, "may": 14076.83, "jun": 8433.39, "total": 145502.31, "units": 106}, {"offer_id": "Fancl Vegetable 150", "brand": "FANCL", "apr": 23139.26, "may": 37788.7, "jun": 12968.05, "total": 138053.61, "units": 209}, {"offer_id": "Centrum Women 200", "brand": "CENTRUM", "apr": 48523.93, "may": 30978.65, "jun": 5220.93, "total": 136510.93, "units": 51}, {"offer_id": null, "brand": null, "apr": 2198.57, "may": 83747.41, "jun": 29437.07, "total": 123071.84, "units": 37}, {"offer_id": "FANCL Adult Calorie 90", "brand": "FANCL", "apr": 35235.68, "may": 30579.14, "jun": 16638.76, "total": 122156.15, "units": 50}, {"offer_id": "Centrum Women 120", "brand": "CENTRUM", "apr": 23947.56, "may": 0.0, "jun": 0.0, "total": 116113.38, "units": 78}, {"offer_id": "Fancl Keen", "brand": "FANCL", "apr": 33856.53, "may": 41323.17, "jun": 4086.44, "total": 104308.55, "units": 51}, {"offer_id": "LACTOFIT-Green-60", "brand": "Lacto-fit", "apr": 26001.59, "may": 32929.37, "jun": 17405.87, "total": 103586.4, "units": 52}, {"offer_id": "Centrum Sliver men women 275", "brand": "CENTRUM", "apr": 0.0, "may": 44062.78, "jun": 11067.05, "total": 96583.64, "units": 17}, {"offer_id": "Fancl Fat Diet 90", "brand": "FANCL", "apr": 51051.27, "may": 21712.13, "jun": 15317.64, "total": 94428.45, "units": 30}, {"offer_id": "FANCL-Men-40-Plus-90", "brand": "FANCL", "apr": 0.0, "may": 33044.83, "jun": 59915.56, "total": 92960.38, "units": 11}, {"offer_id": "Inochi no Haha A 840", "brand": "Kobayashi", "apr": 16328.86, "may": 24040.99, "jun": 0.0, "total": 86613.52, "units": 21}, {"offer_id": "Fancl Collagen 180", "brand": "FANCL", "apr": 29232.87, "may": 17592.46, "jun": 6658.27, "total": 74189.69, "units": 44}, {"offer_id": "Perfect-astaxanthincollagenpowder-378g", "brand": "Asahi", "apr": 16359.42, "may": 35000.0, "jun": 15674.34, "total": 71029.46, "units": 18}, {"offer_id": "FANCL-enkin-30capsules", "brand": "FANCL", "apr": 29736.67, "may": 20052.13, "jun": 20437.26, "total": 70226.06, "units": 34}, {"offer_id": "Fancl Vitamin B", "brand": "FANCL", "apr": 11089.6, "may": 10131.72, "jun": 10976.27, "total": 61917.24, "units": 112}, {"offer_id": "EARTH JELLY-BERRIES-31", "brand": "Earth", "apr": 15938.43, "may": 17774.94, "jun": 27204.89, "total": 60918.26, "units": 31}, {"offer_id": "Earth-Mango-31", "brand": "Earth", "apr": 5303.24, "may": 27620.22, "jun": 25488.2, "total": 58411.66, "units": 31}, {"offer_id": "Foodology+guodongtiao+10pieces", "brand": "foodology", "apr": 15032.69, "may": 36081.85, "jun": 7158.49, "total": 58273.04, "units": 36}, {"offer_id": "Lacto-Fit-Yellow*3", "brand": "Lacto-fit", "apr": 7284.69, "may": 18036.03, "jun": 7939.31, "total": 55279.78, "units": 15}, {"offer_id": "LACTOFIT-Orange-60", "brand": "Lacto-fit", "apr": 18066.19, "may": 26960.99, "jun": 9659.55, "total": 54686.73, "units": 28}, {"offer_id": "Fancl Base Power 90", "brand": "FANCL", "apr": 17877.49, "may": 16515.3, "jun": 1159.26, "total": 54550.08, "units": 46}, {"offer_id": "FANCL Кальций + Магний", "brand": "FANCL", "apr": 7813.56, "may": 11963.36, "jun": 4465.5, "total": 48401.85, "units": 63}, {"offer_id": "PerfectAstacollagen-guokoulaogenfen-447g", "brand": "Asahi", "apr": 17790.38, "may": 12710.21, "jun": 8438.23, "total": 47859.64, "units": 11}, {"offer_id": "LACTOFIT-Blue-60", "brand": "Lacto-fit", "apr": 7986.1, "may": 27352.87, "jun": 1903.85, "total": 47446.78, "units": 24}, {"offer_id": "FANCL-kaluolimite-90tablets", "brand": "FANCL", "apr": 16219.83, "may": 25192.35, "jun": 1382.6, "total": 45859.86, "units": 32}];
+    76|
+    77|const COLORS = ['#6c8cff','#ff6b6b','#ffb86c','#51cf66','#cc5de8','#20c997','#fcc419','#ff922b','#748ffc','#e599f7'];
+    78|const MONTHS = {'feb':'2月','mar':'3月','apr':'4月','may':'5月','jun':'6月'};
+    79|const MONTH_ORDER = ['feb','mar','apr','may','jun'];
+    80|const MLABELS = ['2月','3月','4月','5月','6月'];
+    81|let charts = {};
+    82|
+    83|function fmt(n,f=2){return Number(n).toLocaleString('ru-RU',{minimumFractionDigits:f})}
+    84|function pct(v){return v!==null&&v!==undefined?Number(v).toFixed(1):'—'}
+    85|
+    86|document.querySelectorAll('.tab-btn').forEach(b=>{
+    87|  b.addEventListener('click',()=>{
+    88|    document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+    89|    document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+    90|    b.classList.add('active');
+    91|    document.getElementById('tab-'+b.dataset.tab).classList.add('active');
+    92|  });
+    93|});
+    94|
+    95|// ══════════════════════════════
+    96|// PAGE 1: OVERVIEW
+    97|// ══════════════════════════════
+    98|function renderOverview() {
+    99|  const total = BRANDS.reduce((s,b)=>s+b.total,0);
+   100|  const units = BRANDS.reduce((s,b)=>s+b.units,0);
+   101|  const skusT = BRANDS.reduce((s,b)=>s+b.skus,0);
+   102|  const aov = total/units;
+   103|  const top5 = BRANDS.slice(0,5);
+   104|  const top5pct = top5.reduce((s,b)=>s+b.total,0)/total*100;
+   105|  const monthly = BRANDS.reduce((a,b)=>{
+   106|    MONTH_ORDER.forEach(m=>{if(!a[m])a[m]=0;a[m]+=b[m]||0});
+   107|    return a;
+   108|  },{});
+   109|
+   110|  // Stats
+   111|  const s = total>0?`
+   112|  <div class="stats-row">
+   113|    <div class="stat-card"><div class="label">總銷售額(2-6月)</div><div class="value">₽${(total/1e6).toFixed(2)}M</div><div class="sub">${fmt(total)} ₽</div></div>
+   114|    <div class="stat-card"><div class="label">總銷量</div><div class="value">${fmt(units,0)} 件</div><div class="sub">${skusT} SKU</div></div>
+   115|    <div class="stat-card"><div class="label">整體客單價</div><div class="value">₽${fmt(aov)}</div><div class="sub">${BRANDS.length} 個品牌</div></div>
+   116|    <div class="stat-card"><div class="label">TOP5佔比</div><div class="value">${pct(top5pct)}%</div><div class="sub">₽${(top5.reduce((s,b)=>s+b.total,0)/1e6).toFixed(2)}M</div></div>
+   117|    <div class="stat-card"><div class="label">最高月銷售</div><div class="value">5月·₽${(monthly.may/1e6).toFixed(2)}M</div><div class="sub">6月(11天):₽${(monthly.jun/1e6).toFixed(2)}M</div></div>
+   118|  </div>`:'';
+   119|  document.getElementById('tab-overview').innerHTML = s;
+   120|
+   121|  // Monthly trend
+   122|  addChart('tab-overview','mTrend',MLABELS,[
+   123|    {label:'月銷售額(₽)',data:MONTH_ORDER.map(m=>monthly[m]),backgroundColor:COLORS[0]+'cc',borderRadius:3,borderSkipped:false},
+   124|    {label:'環比變化%',data:[null,...MONTH_ORDER.slice(1).map((m,i)=>{
+   125|      const p=monthly[MONTH_ORDER[i]],c=monthly[m];
+   126|      return p>0?((c-p)/p*100):0
+   127|    })],type:'line',borderColor:COLORS[2],backgroundColor:COLORS[2]+'20',fill:true,tension:.3,pointRadius:4,yAxisID:'y1',order:1}
+   128|  ],{
+   129|    y:{type:'linear',position:'left',ticks:{color:'#888',callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'#22222e'}},
+   130|    y1:{type:'linear',position:'right',ticks:{color:COLORS[2],callback:v=>v+'%'},grid:{display:false}}
+   131|  });
+   132|
+   133|  // Brand pie
+   134|  const pieLabels = top5.map(b=>b.brand);
+   135|  const pieData = top5.map(b=>b.total);
+   136|  if(BRANDS.length>5){pieLabels.push('其他('+(BRANDS.length-5)+'個)');pieData.push(BRANDS.slice(5).reduce((s,b)=>s+b.total,0));}
+   137|  addPie('tab-overview','bPie',pieLabels,pieData);
+   138|
+   139|  // Monthly by top5 brands
+   140|  const ds = top5.map((b,i)=>({
+   141|    label:b.brand,
+   142|    data:MONTH_ORDER.map(m=>b[m]||0),
+   143|    borderColor:COLORS[i],backgroundColor:COLORS[i]+'20',fill:false,tension:.3,pointRadius:3
+   144|  }));
+   145|  addChart('tab-overview','bTrend',MLABELS,ds,{
+   146|    y:{type:'linear',ticks:{color:'#888',callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'#22222e'}},
+   147|    x:{ticks:{color:'#666'},grid:{color:'#22222e'}}
+   148|  });
+   149|
+   150|  // Key insight
+   151|  const fanclMar = BRANDS.find(b=>b.brand==='FANCL');
+   152|  const centMay = BRANDS.find(b=>b.brand==='CENTRUM');
+   153|  const lacto = BRANDS.find(b=>b.brand==='Lacto-fit');
+   154|  document.getElementById('tab-overview').insertAdjacentHTML('beforeend',`
+   155|    <div class="insight-box"><h4>🔍 核心發現</h4>
+   156|    <p>• <b>FANCL</b>：佔 <span class="highlight">75.4%</span> 銷售額，2月→5月增長 <span class="success">+12.2%</span><br>
+   157|    • <b>Centrum</b>：連續下跌，2月→5月 <span class="danger">-38.2%</span>，需關注庫存/競品<br>
+   158|    • <b>Lacto-fit</b>：高速增長 <span class="success">+181.7%</span>（2月→5月），健康品牌<br>
+   159|    • <b>Asahi</b>：爆發式增長 <span class="success">+555%</span>（2月→5月），新品牌潛力大<br>
+   160|    • 6月前11天已達 ₽${(monthly.jun/1e6).toFixed(2)}M，若維持全月約₽${((monthly.jun/11*30)/1e6).toFixed(2)}M</p></div>
+   161|  `);
+   162|}
+   163|
+   164|// ══════════════════════════════
+   165|// PAGE 2: BRAND DETAIL
+   166|// ══════════════════════════════
+   167|function renderBrands() {
+   168|  let html = `<div class="filters">
+   169|    <div class="filter-group"><label>選擇品牌</label>
+   170|      <select id="bSel">${BRANDS.map((b,i)=>`<option value="${i}">${b.brand}</option>`).join('')}</select></div>
+   171|  </div><div id="bDetail"></div>`;
+   172|  document.getElementById('tab-brands').innerHTML = html;
+   173|
+   174|  document.getElementById('bSel').addEventListener('change',()=>showBrand(document.getElementById('bSel').value));
+   175|  showBrand(0);
+   176|}
+   177|
+   178|function showBrand(idx) {
+   179|  const b = BRANDS[idx];
+   180|  if(!b) return;
+   181|  const months = MONTH_ORDER.map(m=>({m,rev:b[m]||0,label:MONTHS[m]}));
+   182|  const maxRev = Math.max(...months.map(x=>x.rev),1);
+   183|  const growth2to5 = b.feb>0?((b.may-b.feb)/b.feb*100):null;
+   184|
+   185|  document.getElementById('bDetail').innerHTML = `
+   186|  <div class="stats-row">
+   187|    <div class="stat-card"><div class="label">品牌</div><div class="value">${b.brand}</div><div class="sub">${b.total>1e6?'₽'+(b.total/1e6).toFixed(2)+'M':fmt(b.total)}</div></div>
+   188|    <div class="stat-card"><div class="label">總銷量</div><div class="value">${fmt(b.units,0)}</div><div class="sub">${b.skus} SKU</div></div>
+   189|    <div class="stat-card"><div class="label">客單價</div><div class="value">₽${fmt(b.aov)}</div><div class="sub">佔比 ${pct(b.total/BRANDS.reduce((s,x)=>s+x.total,0)*100)}%</div></div>
+   190|    <div class="stat-card"><div class="label">加購率</div><div class="value">${pct(b.cart_rate)}%</div><div class="sub">轉化率 ${pct(b.conv)}%</div></div>
+   191|    <div class="stat-card"><div class="label">2→5月增長</div><div class="value ${growth2to5>0?'chg-up':'chg-down'}">${growth2to5!==null?(growth2to5>0?'+':'')+pct(growth2to5)+'%':'N/A'}</div><div class="sub">新開?${!b.feb?'Yes':''}</div></div>
+   192|  </div>
+   193|  <div class="chart-card"><h3>📊 月度銷售走勢</h3>
+   194|    <div style="padding:4px 0">${months.map(m=>{
+   195|      const pctW = maxRev>0?(m.rev/maxRev*100).toFixed(0):0;
+   196|      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+   197|        <span style="min-width:28px;font-size:12px;color:#888">${m.label}</span>
+   198|        <div style="flex:1;height:22px;background:#22222e;border-radius:4px;overflow:hidden">
+   199|          <div style="height:100%;width:${pctW}%;background:${COLORS[0]};border-radius:4px;min-width:${pctW>0?'4px':'0'}"></div>
+   200|        </div>
+   201|        <span style="min-width:80px;text-align:right;font-size:12px;color:#aaa">₽${(m.rev/1000).toFixed(0)}K</span>
+   202|      </div>`;
+   203|    }).join('')}
+   204|  </div></div>`;
+   205|}
+   206|
+   207|// ══════════════════════════════
+   208|// PAGE 3: SKU DIAGNOSTIC
+   209|// ══════════════════════════════
+   210|function renderSkus() {
+   211|  let html = `<div class="filters">
+   212|    <div class="filter-group"><label>排序</label>
+   213|      <select id="sSort">
+   214|        <option value="total">總銷售額</option>
+   215|        <option value="may">5月銷售額</option>
+   216|        <option value="growth">4→5月增長</option>
+   217|        <option value="decline">4→5月下跌</option>
+   218|      </select></div>
+   219|    <div class="filter-group"><label>品牌</label>
+   220|      <select id="sBrand"><option value="all">全部品牌</option>${[...new Set(TOP_SKUS.map(s=>s.brand).filter(Boolean))].sort().map(b=>`<option value="${b}">${b}</option>`).join('')}</select></div>
+   221|  </div>
+   222|  <div class="insight-box"><h4>🔍 4→5月變化總結</h4>
+   223|    <p id="sInsight">載入中...</p>
+   224|  </div>
+   225|  <div class="chart-card"><h3>📦 SKU 排行(可排序)</h3>
+   226|    <div class="table-scroll"><table class="data-table"><thead><tr>
+   227|      <th>offer_id</th><th>品牌</th><th>總銷售</th><th>總銷量</th>
+   228|      <th>4月</th><th>5月</th><th>6月</th><th>4→5月變化</th>
+   229|    </tr></thead><tbody id="sBody"></tbody></table></div>
+   230|  </div>`;
+   231|  document.getElementById('tab-skus').innerHTML = html;
+   232|  document.getElementById('sSort').addEventListener('change',sortSkus);
+   233|  document.getElementById('sBrand').addEventListener('change',sortSkus);
+   234|
+   235|  // Insights
+   236|  const growers = TOP_SKUS.filter(s=>s.apr>0&&s.may>0).sort((a,b)=>(b.may/b.apr)-(a.may/a.apr)).slice(0,5);
+   237|  const decliners = TOP_SKUS.filter(s=>s.apr>20000&&s.may<s.apr).sort((a,b)=>(a.may/a.apr)-(b.may/b.apr)).slice(0,5);
+   238|  document.getElementById('sInsight').innerHTML =
+   239|    `📈 增長最快: ${growers.map(s=>`<b>${s.offer_id}</b>(${(s.may/s.apr*100-100).toFixed(0)}%)`).join('、')}<br>`+
+   240|    `📉 下跌最多: ${decliners.map(s=>`<b>${s.offer_id}</b>(${((s.may/s.apr-1)*100).toFixed(0)}%)`).join('、')}`;
+   241|  sortSkus();
+   242|}
+   243|
+   244|function sortSkus() {
+   245|  const sort = document.getElementById('sSort').value;
+   246|  const brand = document.getElementById('sBrand').value;
+   247|  let data = brand==='all'?TOP_SKUS:TOP_SKUS.filter(s=>s.brand===brand);
+   248|
+   249|  if(sort==='total') data.sort((a,b)=>b.total-a.total);
+   250|  else if(sort==='may') data.sort((a,b)=>(b.may||0)-(a.may||0));
+   251|  else if(sort==='growth') data.sort((a,b)=>{
+   252|    const ga=a.apr>0?(a.may||0)/a.apr:0,gb=b.apr>0?(b.may||0)/b.apr:0;
+   253|    return gb-ga;
+   254|  });
+   255|  else data.sort((a,b)=>{
+   256|    const da=a.apr>0?(a.may||0)/a.apr:999,db=b.apr>0?(b.may||0)/b.apr:999;
+   257|    return da-db;
+   258|  });
+   259|
+   260|  document.getElementById('sBody').innerHTML = data.slice(0,50).map(s=>{
+   261|    const chg = s.apr>0?((s.may||0)/s.apr*100-100):null;
+   262|    const cls = chg!==null?(chg>20?'chg-up':chg<-20?'chg-down':''):'';
+   263|    return `<tr>
+   264|      <td>${s.offer_id||'—'}</td><td>${s.brand||'—'}</td>
+   265|      <td>₽${fmt(s.total)}</td><td>${fmt(s.units,0)}</td>
+   266|      <td>₽${fmt(s.apr||0)}</td><td>₽${fmt(s.may||0)}</td>
+   267|      <td>₽${fmt(s.jun||0)}</td>
+   268|      <td class="${cls}">${chg!==null?(chg>0?'+':'')+pct(chg)+'%':'—'}</td>
+   269|    </tr>`;
+   270|  }).join('');
+   271|}
+   272|
+   273|// ══════════════════════════════
+   274|// PAGE 4: GROWTH ANALYSIS
+   275|// ══════════════════════════════
+   276|function renderGrowth() {
+   277|  // Brand growth
+   278|  const bg = BRANDS.map(b=>{
+   279|    const g = b.feb>0?((b.may-b.feb)/b.feb*100):(b.mar>0?((b.may-b.mar)/b.mar*100):null);
+   280|    return {...b,growth:g};
+   281|  }).sort((a,b)=>(b.growth||-999)-(a.growth||-999));
+   282|
+   283|  const growers = bg.filter(b=>b.growth!==null&&b.total>50000).slice(0,6);
+   284|  const decliners = BRANDS.filter(b=>b.feb>0).sort((a,b)=>((a.may-a.feb)/a.feb)-((b.may-b.feb)/b.feb)).slice(0,3);
+   285|
+   286|  // SKU level growth
+   287|  const skuGrow = TOP_SKUS.filter(s=>s.apr>0&&s.may>0).sort((a,b)=>(b.may/b.apr)-(a.may/a.apr)).slice(0,10);
+   288|  const skuDecline = TOP_SKUS.filter(s=>s.apr>20000).sort((a,b)=>(a.may/a.apr)-(b.may/b.apr)).slice(0,10);
+   289|
+   290|  document.getElementById('tab-growth').innerHTML = `
+   291|  <div class="insight-box"><h4>📊 品牌增長排行榜 (2月→5月)</h4>
+   292|    ${growers.map(b=>{
+   293|      const g = b.growth||0;
+   294|      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+   295|        <span style="min-width:80px;font-size:12px;font-weight:500;color:#ddd">${b.brand}</span>
+   296|        <div style="flex:1;height:18px;background:#22222e;border-radius:4px;overflow:hidden">
+   297|          <div style="height:100%;width:${Math.min(g/5,100)}%;background:${g>0?'#51cf66':'#ff6b6b'};border-radius:4px;min-width:4px"></div>
+   298|        </div>
+   299|        <span style="min-width:60px;text-align:right;font-size:12px;color:${g>0?'#51cf66':'#ff6b6b'}">${g>0?'+':''}${pct(g)}%</span>
+   300|        <span style="min-width:70px;text-align:right;font-size:11px;color:#888">₽${(b.total/1000).toFixed(0)}K</span>
+   301|      </div>`;
+   302|    }).join('')}
+   303|  </div>
+   304|
+   305|  <div class="chart-card"><h3>📈 增長最快 SKU (4月→5月, 倍數)</h3>
+   306|    <canvas id="gSkuChart"></canvas>
+   307|  </div>
+   308|
+   309|  <div class="chart-card"><h3>📉 下跌最嚴重 SKU (4月→5月)</h3>
+   310|   <p style="font-size:12px;color:#888;margin-bottom:8px">注意：以下SKU中有部分係<b>改名/產品升級</b>導致4月有銷量5月歸零，唔一定係真跌</p>
+   311|   <div class="table-scroll"><table class="data-table"><thead><tr>
+   312|    <th>offer_id</th><th>品牌</th><th>4月</th><th>5月</th><th>變化</th><th>備註</th>
+   313|   </tr></thead><tbody>
+   314|    ${skuDecline.map(s=>{
+   315|      const chg = s.apr>0?((s.may||0)/s.apr*100-100):-100;
+   316|      // Check if the brand has a "Plus" alternative
+   317|      const baseName = (s.offer_id||'').replace(/\s+\d+\+/,'');
+   318|      const hasPlus = TOP_SKUS.some(x=>x.brand===s.brand&&x.offer_id!==s.offer_id&&(x.offer_id||'').includes('Plus')&&(x.offer_id||'').includes(baseName));
+   319|      return `<tr>
+   320|        <td>${s.offer_id||'—'}</td><td>${s.brand||'—'}</td>
+   321|        <td>₽${fmt(s.apr)}</td><td>₽${fmt(s.may||0)}</td>
+   322|        <td class="${chg>-20?'chg-down':''}">${pct(chg)}%</td>
+   323|        <td style="font-size:11px;color:#888">${hasPlus?'⚠️ 疑轉買大包裝Plus版':'—'}</td>
+   324|      </tr>`;
+   325|    }).join('')}
+   326|   </tbody></table></div>
+   327|  </div>
+   328|
+   329|  <div class="chart-card"><h3>📋 品牌組合健康度 (2月=100%)</h3>
+   330|    <canvas id="gIndexChart"></canvas>
+   331|    <p style="font-size:11px;color:#666;margin-top:6px">👇 揀品牌比較</p>
+   332|    <div style="display:flex;flex-wrap:wrap;gap:4px" id="gCheckboxes"></div>
+   333|  </div>
+   334|  `;
+   335|
+   336|  // SKU growth chart
+   337|  addChart('tab-growth','gSkuChart',skuGrow.map(s=>s.offer_id||'—'),[
+   338|    {label:'4月(₽)',data:skuGrow.map(s=>s.apr),backgroundColor:COLORS[0]+'cc',borderRadius:3,borderSkipped:false},
+   339|    {label:'5月(₽)',data:skuGrow.map(s=>s.may),backgroundColor:COLORS[2]+'cc',borderRadius:3,borderSkipped:false}
+   340|  ],{
+   341|    indexAxis:'y',
+   342|    x:{ticks:{color:'#888',callback:v=>v>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'#22222e'}},
+   343|    y:{ticks:{color:'#888',font:{size:9}},grid:{display:false}}
+   344|  });
+   345|
+   346|  // Index chart (Feb=100%)
+   347|  const selectedBrands = ['FANCL','CENTRUM','Lacto-fit','Asahi'];
+   348|  const indexLabels = MLABELS;
+   349|  const indexColors = ['#6c8cff','#ff6b6b','#51cf66','#cc5de8','#fcc419'];
+   350|
+   351|  function renderIndexChart(selected) {
+   352|    const datasets = selected.map((name,i)=>{
+   353|      const b = BRANDS.find(x=>x.brand===name);
+   354|      if(!b) return null;
+   355|      const base = b.feb||1;
+   356|      return {
+   357|        label:name,
+   358|        data:MONTH_ORDER.map(m=>b[m]?((b[m]/base)*100):0),
+   359|        borderColor:indexColors[i],backgroundColor:indexColors[i]+'15',
+   360|        fill:false,tension:.3,pointRadius:3
+   361|      };
+   362|    }).filter(Boolean);
+   363|    addChart('tab-growth','gIndexChart',indexLabels,datasets,{
+   364|      y:{type:'linear',ticks:{color:'#888',callback:v=>v+'%'},grid:{color:'#22222e'}},
+   365|      x:{ticks:{color:'#666'},grid:{color:'#22222e'}}
+   366|    });
+   367|  }
+   368|
+   369|  const brandsAvail = BRANDS.filter(b=>b.feb>0).map(b=>b.brand);
+   370|  const cbHtml = brandsAvail.map(b => {
+   371|    const checked = selectedBrands.includes(b)?'checked':'';
+   372|    return `<label style="font-size:12px;color:#aaa;display:flex;align-items:center;gap:4px;cursor:pointer">
+   373|      <input type="checkbox" ${checked} data-brand="${b}" style="accent-color:#6c8cff">${b}</label>`;
+   374|  }).join('');
+   375|  document.getElementById('gCheckboxes').innerHTML = cbHtml;
+   376|  document.querySelectorAll('#gCheckboxes input').forEach(cb=>{
+   377|    cb.addEventListener('change',()=>{
+   378|      const sel = [...document.querySelectorAll('#gCheckboxes input:checked')].map(x=>x.dataset.brand);
+   379|      renderIndexChart(sel);
+   380|    });
+   381|  });
+   382|  renderIndexChart(selectedBrands);
+   383|}
+   384|
+   385|// ── Chart helpers ──
+   386|function addChart(parent,id,labels,datasets,scales){
+   387|  const div = document.getElementById(parent);
+   388|  const existing = document.getElementById('c_'+id);
+   389|  if(existing) existing.remove();
+   390|  div.insertAdjacentHTML('beforeend',`<div class="chart-card" id="c_${id}"><canvas id="${id}"></canvas></div>`);
+   391|  const ctx = document.getElementById(id).getContext('2d');
+   392|  if(charts[id]) charts[id].destroy();
+   393|  charts[id] = new Chart(ctx,{
+   394|    type: datasets.some(d=>d.type==='line')?'bar':'bar',
+   395|    data:{labels,datasets},
+   396|    options:{
+   397|      responsive:true,maintainAspectRatio:false,
+   398|      interaction:{mode:'index',intersect:false},
+   399|      plugins:{
+   400|        legend:{labels:{color:'#888',usePointStyle:true,padding:12,font:{size:11}}},
+   401|        tooltip:{backgroundColor:'#1a1a24',titleColor:'#e0e0e0',bodyColor:'#ccc',borderColor:'#2a2a3a',borderWidth:1,padding:8}
+   402|      },scales:scales||{
+   403|        y:{ticks:{color:'#888',callback:v=>v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':v},grid:{color:'#22222e'}},
+   404|        x:{ticks:{color:'#666'},grid:{color:'#22222e'}}
+   405|      }
+   406|    }
+   407|  });
+   408|}
+   409|
+   410|function addPie(parent,id,labels,data){
+   411|  const div = document.getElementById(parent);
+   412|  const existing = document.getElementById('c_'+id);
+   413|  if(existing) existing.remove();
+   414|  div.insertAdjacentHTML('beforeend',`<div class="chart-card" id="c_${id}"><h3>🏆 品牌佔比</h3><canvas id="${id}"></canvas></div>`);
+   415|  const ctx = document.getElementById(id).getContext('2d');
+   416|  if(charts[id]) charts[id].destroy();
+   417|  charts[id] = new Chart(ctx,{
+   418|    type:'doughnut',
+   419|    data:{labels,datasets:[{data,backgroundColor:COLORS.slice(0,labels.length),borderWidth:0}]},
+   420|    options:{
+   421|      responsive:true,maintainAspectRatio:false,
+   422|      plugins:{
+   423|        legend:{position:'right',labels:{color:'#888',padding:10,font:{size:11}}},
+   424|        tooltip:{backgroundColor:'#1a1a24',titleColor:'#e0e0e0',bodyColor:'#ccc',borderColor:'#2a2a3a',borderWidth:1,
+   425|          callbacks:{label:ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);return ctx.label+': ₽'+ctx.parsed.toLocaleString()+' ('+((ctx.parsed/t)*100).toFixed(1)+'%)'}}}
+   426|      }
+   427|    }
+   428|  });
+   429|}
+   430|
+   431|renderOverview();
+   432|renderBrands();
+   433|renderSkus();
+   434|renderGrowth();
+   435|</script>
+   436|</body>
+   437|</html>
+   438|
