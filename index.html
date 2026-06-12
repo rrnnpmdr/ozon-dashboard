@@ -331,12 +331,14 @@ function render() {
   const totalViews = skuAgg.reduce((s, d) => s + d.hits_view, 0);
   const totalCarts = skuAgg.reduce((s, d) => s + d.hits_tocart, 0);
   const activeSku = skuAgg.filter(d => d.ordered_units > 0).length;
+  const aov = totalUnits > 0 ? (totalRevenue / totalUnits) : 0;
   const cartRate = totalViews > 0 ? (totalCarts / totalViews * 100) : 0;
   const conversion = totalViews > 0 ? (totalUnits / totalViews * 100) : 0;
 
   document.getElementById('statRevenue').textContent = totalRevenue.toLocaleString('ru-RU', {minimumFractionDigits:2});
   document.getElementById('statUnits').textContent = totalUnits.toLocaleString();
   document.getElementById('statSku').textContent = activeSku;
+  document.getElementById('statAov').textContent = aov.toLocaleString('ru-RU', {minimumFractionDigits:2});
   document.getElementById('statCartRate').textContent = cartRate.toFixed(2);
   document.getElementById('statViews').textContent = totalViews.toLocaleString();
   document.getElementById('statConv').textContent = conversion.toFixed(3);
