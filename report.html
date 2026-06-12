@@ -172,7 +172,7 @@ function renderOverview() {
   const totalU = mt.reduce((s,m) => s + m.units, 0);
   const totalV = mt.reduce((s,m) => s + m.views, 0);
   const totalC = mt.reduce((s,m) => s + m.carts, 0);
-  const totalRt = mt.reduce((s,m) => s + m.returns, 0);
+  const totalRt = mt.reduce((s,m) => s + (m.returns || 0), 0);
   document.getElementById('overviewStats').innerHTML =
     '<div class="stat-card"><div class="label">2-6月总销售额</div><div class="value">₽'+fm(totalR)+'</div><div class="sub"></div></div>'+
     '<div class="stat-card"><div class="label">总销量</div><div class="value">'+fi(totalU)+'</div><div class="sub">件</div></div>'+
