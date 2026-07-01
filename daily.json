@@ -1345,10 +1345,10 @@
   },
   {
     "date": "2026-06-18",
-    "revenue": 2035.7,
-    "ordered_units": 9,
-    "hits_view": 0,
-    "hits_tocart": 0,
+    "revenue": 85477.34850000001,
+    "ordered_units": 40,
+    "hits_view": 28489,
+    "hits_tocart": 153,
     "returns_qty": 0
   },
   {
@@ -1389,6 +1389,54 @@
     "ordered_units": 37,
     "hits_view": 53494,
     "hits_tocart": 205,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-24",
+    "revenue": 160397.0581,
+    "ordered_units": 47,
+    "hits_view": 48819,
+    "hits_tocart": 218,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-25",
+    "revenue": 168488.4898,
+    "ordered_units": 54,
+    "hits_view": 44500,
+    "hits_tocart": 248,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-26",
+    "revenue": 184457.93529999998,
+    "ordered_units": 42,
+    "hits_view": 39131,
+    "hits_tocart": 198,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-27",
+    "revenue": 121607.8097,
+    "ordered_units": 47,
+    "hits_view": 37088,
+    "hits_tocart": 205,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-28",
+    "revenue": 107226.9568,
+    "ordered_units": 36,
+    "hits_view": 43843,
+    "hits_tocart": 237,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-06-29",
+    "revenue": 72206.1678,
+    "ordered_units": 26,
+    "hits_view": 52257,
+    "hits_tocart": 268,
     "returns_qty": 0
   }
 ]
