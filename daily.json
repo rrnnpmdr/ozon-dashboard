@@ -1446,5 +1446,29 @@
     "hits_view": 72033,
     "hits_tocart": 292,
     "returns_qty": 0
+  },
+  {
+    "date": "2026-07-01",
+    "revenue": 142800.8814,
+    "ordered_units": 39,
+    "hits_view": 78574,
+    "hits_tocart": 258,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-07-02",
+    "revenue": 150396.552,
+    "ordered_units": 60,
+    "hits_view": 84425,
+    "hits_tocart": 302,
+    "returns_qty": 0
+  },
+  {
+    "date": "2026-07-03",
+    "revenue": 114966.7709,
+    "ordered_units": 33,
+    "hits_view": 60454,
+    "hits_tocart": 268,
+    "returns_qty": 0
   }
 ]
