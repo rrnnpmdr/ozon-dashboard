@@ -1478,5 +1478,13 @@
     "hits_view": 58121,
     "hits_tocart": 272,
     "returns_qty": 0
+  },
+  {
+    "date": "2026-07-05",
+    "revenue": 160204.3095,
+    "ordered_units": 53,
+    "hits_view": 59936,
+    "hits_tocart": 273,
+    "returns_qty": 0
   }
 ]
