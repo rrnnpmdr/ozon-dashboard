@@ -81,99 +81,99 @@
     {
       "month": "2026-07",
       "label": "7月",
-      "revenue": 1003243.06,
-      "units": 344,
-      "skus": 207,
-      "views": 464051,
-      "carts": 1928,
+      "revenue": 1115612.35,
+      "units": 381,
+      "skus": 211,
+      "views": 513990,
+      "carts": 2201,
       "cart_rate": 0.4,
-      "aov": 2916.4,
-      "change_rev": -78.5,
-      "change_units": -85.9
+      "aov": 2928.12,
+      "change_rev": -76.0,
+      "change_units": -84.4
     }
   ],
-  "latest_date": "2026-07-07",
+  "latest_date": "2026-07-08",
   "today": {
-    "date": "2026-07-07",
-    "revenue": 178602.32,
-    "units": 50,
-    "views": 60150,
-    "carts": 302,
-    "skus": 198,
-    "aov": 3572.05,
+    "date": "2026-07-08",
+    "revenue": 112369.29,
+    "units": 37,
+    "views": 49939,
+    "carts": 273,
+    "skus": 201,
+    "aov": 3037.01,
     "cart_rate": 0.5
   },
   "yesterday": {
-    "date": "2026-07-06",
-    "revenue": 122789.7917,
-    "units": 57
+    "date": "2026-07-07",
+    "revenue": 178602.3197,
+    "units": 50
   },
   "brand_ranking": [
     {
       "brand": "FANCL",
-      "revenue": 16892222.1867,
-      "units": 10361,
-      "views": 4261748,
-      "carts": 22321,
-      "pct": 74.4,
-      "aov": 1630.37,
+      "revenue": 16983946.7055,
+      "units": 10384,
+      "views": 4284011,
+      "carts": 22462,
+      "pct": 74.5,
+      "aov": 1635.59,
       "cart_rate": 0.5
     },
     {
       "brand": "CENTRUM",
-      "revenue": 3579430.2558,
-      "units": 3069,
-      "views": 1200401,
-      "carts": 5291,
-      "pct": 15.8,
-      "aov": 1166.32,
+      "revenue": 3582358.5926,
+      "units": 3071,
+      "views": 1204698,
+      "carts": 5318,
+      "pct": 15.7,
+      "aov": 1166.51,
       "cart_rate": 0.4
     },
     {
       "brand": "Lacto-fit",
-      "revenue": 923067.3822999999,
-      "units": 813,
-      "views": 460793,
-      "carts": 3129,
+      "revenue": 930793.6862,
+      "units": 817,
+      "views": 464066,
+      "carts": 3152,
       "pct": 4.1,
-      "aov": 1135.38,
+      "aov": 1139.28,
       "cart_rate": 0.7
     },
     {
       "brand": "Earth",
-      "revenue": 374251.0993,
-      "units": 296,
-      "views": 115169,
-      "carts": 894,
-      "pct": 1.6,
-      "aov": 1264.36,
+      "revenue": 379961.35599999997,
+      "units": 299,
+      "views": 118033,
+      "carts": 916,
+      "pct": 1.7,
+      "aov": 1270.77,
       "cart_rate": 0.8
     },
     {
       "brand": "Asahi",
-      "revenue": 369821.4541,
-      "units": 184,
-      "views": 135440,
-      "carts": 688,
+      "revenue": 370936.4746,
+      "units": 185,
+      "views": 137251,
+      "carts": 696,
       "pct": 1.6,
-      "aov": 2009.9,
+      "aov": 2005.06,
       "cart_rate": 0.5
     },
     {
       "brand": "DHC",
-      "revenue": 159862.9799,
-      "units": 291,
-      "views": 166679,
-      "carts": 1034,
+      "revenue": 162419.6431,
+      "units": 294,
+      "views": 168916,
+      "carts": 1051,
       "pct": 0.7,
-      "aov": 549.36,
+      "aov": 552.45,
       "cart_rate": 0.6
     },
     {
       "brand": "Kobayashi",
       "revenue": 132914.5436,
       "units": 60,
-      "views": 30807,
+      "views": 30820,
       "carts": 258,
       "pct": 0.6,
       "aov": 2215.24,
@@ -183,8 +183,8 @@
       "brand": "foodology",
       "revenue": 116578.4567,
       "units": 108,
-      "views": 153740,
-      "carts": 442,
+      "views": 154288,
+      "carts": 444,
       "pct": 0.5,
       "aov": 1079.43,
       "cart_rate": 0.3
@@ -193,27 +193,27 @@
       "brand": "KissMe",
       "revenue": 31972.3005,
       "units": 81,
-      "views": 45059,
-      "carts": 318,
+      "views": 45368,
+      "carts": 323,
       "pct": 0.1,
       "aov": 394.72,
       "cart_rate": 0.7
     },
     {
       "brand": "未知品牌",
-      "revenue": 28123.0253,
-      "units": 154,
-      "views": 184838,
-      "carts": 284,
+      "revenue": 28731.2183,
+      "units": 155,
+      "views": 195012,
+      "carts": 308,
       "pct": 0.1,
-      "aov": 182.62,
+      "aov": 185.36,
       "cart_rate": 0.2
     },
     {
       "brand": "Ettusais",
       "revenue": 16534.550199999998,
       "units": 80,
-      "views": 68310,
+      "views": 68357,
       "carts": 268,
       "pct": 0.1,
       "aov": 206.68,
@@ -223,7 +223,7 @@
       "brand": "Caltrate",
       "revenue": 12426.1717,
       "units": 12,
-      "views": 7908,
+      "views": 7934,
       "carts": 21,
       "pct": 0.1,
       "aov": 1035.51,
@@ -233,7 +233,7 @@
       "brand": "Move Free",
       "revenue": 10505.259399999999,
       "units": 4,
-      "views": 2621,
+      "views": 2642,
       "carts": 13,
       "pct": 0.0,
       "aov": 2626.31,
@@ -243,7 +243,7 @@
       "brand": "Jamieson",
       "revenue": 8913.035899999999,
       "units": 5,
-      "views": 7868,
+      "views": 7939,
       "carts": 11,
       "pct": 0.0,
       "aov": 1782.61,
@@ -253,17 +253,17 @@
       "brand": "Puritan's Pride",
       "revenue": 7001.111199999999,
       "units": 4,
-      "views": 5483,
-      "carts": 18,
+      "views": 5582,
+      "carts": 20,
       "pct": 0.0,
       "aov": 1750.28,
-      "cart_rate": 0.3
+      "cart_rate": 0.4
     },
     {
       "brand": "Florasis",
       "revenue": 3906.8325,
       "units": 1,
-      "views": 42149,
+      "views": 42392,
       "carts": 124,
       "pct": 0.0,
       "aov": 3906.83,
@@ -273,7 +273,7 @@
       "brand": "Vlyco",
       "revenue": 3871.9722,
       "units": 4,
-      "views": 22624,
+      "views": 22704,
       "carts": 28,
       "pct": 0.0,
       "aov": 967.99,
@@ -283,7 +283,7 @@
       "brand": "Нет бренда",
       "revenue": 3500.2813,
       "units": 2,
-      "views": 12332,
+      "views": 12914,
       "carts": 17,
       "pct": 0.0,
       "aov": 1750.14,
@@ -293,7 +293,7 @@
       "brand": "Kate",
       "revenue": 3416.1731,
       "units": 10,
-      "views": 25340,
+      "views": 25403,
       "carts": 35,
       "pct": 0.0,
       "aov": 341.62,
@@ -303,7 +303,7 @@
       "brand": "L'il Critters",
       "revenue": 3368.1357,
       "units": 2,
-      "views": 1231,
+      "views": 1246,
       "carts": 4,
       "pct": 0.0,
       "aov": 1684.07,
@@ -313,7 +313,7 @@
       "brand": "Kerastase",
       "revenue": 3227.1149,
       "units": 2,
-      "views": 16742,
+      "views": 16771,
       "carts": 44,
       "pct": 0.0,
       "aov": 1613.56,
@@ -323,7 +323,7 @@
       "brand": "Swisse",
       "revenue": 3205.7527999999998,
       "units": 2,
-      "views": 1605,
+      "views": 1625,
       "carts": 4,
       "pct": 0.0,
       "aov": 1602.88,
@@ -333,7 +333,7 @@
       "brand": "Stada",
       "revenue": 3203.0542,
       "units": 2,
-      "views": 12450,
+      "views": 12794,
       "carts": 38,
       "pct": 0.0,
       "aov": 1601.53,
@@ -343,8 +343,8 @@
       "brand": "3ce",
       "revenue": 1589.3605,
       "units": 2,
-      "views": 36831,
-      "carts": 43,
+      "views": 37039,
+      "carts": 45,
       "pct": 0.0,
       "aov": 794.68,
       "cart_rate": 0.1
@@ -353,7 +353,7 @@
       "brand": "vitafusion",
       "revenue": 0.0,
       "units": 0,
-      "views": 1368,
+      "views": 1384,
       "carts": 4,
       "pct": 0.0,
       "aov": 0,
@@ -363,7 +363,7 @@
       "brand": "YUHADA",
       "revenue": 0.0,
       "units": 0,
-      "views": 5793,
+      "views": 5831,
       "carts": 2,
       "pct": 0.0,
       "aov": 0,
@@ -373,7 +373,7 @@
       "brand": "OLLY",
       "revenue": 0.0,
       "units": 0,
-      "views": 1183,
+      "views": 1194,
       "carts": 2,
       "pct": 0.0,
       "aov": 0,
@@ -383,7 +383,7 @@
       "brand": "Kaminomoto",
       "revenue": 0.0,
       "units": 0,
-      "views": 1448,
+      "views": 1459,
       "carts": 4,
       "pct": 0.0,
       "aov": 0,
@@ -393,7 +393,7 @@
       "brand": "Gucci",
       "revenue": 0.0,
       "units": 0,
-      "views": 10451,
+      "views": 10484,
       "carts": 6,
       "pct": 0.0,
       "aov": 0,
@@ -403,7 +403,7 @@
       "brand": "BANDAI SPIRITS",
       "revenue": 0.0,
       "units": 0,
-      "views": 594,
+      "views": 600,
       "carts": 0,
       "pct": 0.0,
       "aov": 0,
@@ -412,204 +412,204 @@
   ],
   "top_skus": [
     {
+      "offer_id": "Fancl women 40+",
+      "brand": "FANCL",
+      "revenue": 13200.0412,
+      "units": 4,
+      "views": 1457,
+      "carts": 8,
+      "cart_rate": 0.5,
+      "conversion": 0.27
+    },
+    {
       "offer_id": "Fancl women 60+",
       "brand": "FANCL",
-      "revenue": 19286.2045,
-      "units": 5,
-      "views": 568,
-      "carts": 8,
-      "cart_rate": 1.4,
-      "conversion": 0.88
-    },
-    {
-      "offer_id": "Fancl Men 60+",
-      "brand": "FANCL",
-      "revenue": 18997.2339,
-      "units": 5,
-      "views": 840,
-      "carts": 5,
-      "cart_rate": 0.6,
-      "conversion": 0.6
-    },
-    {
-      "offer_id": "Fancl Brain 120",
-      "brand": "FANCL",
-      "revenue": 15565.2748,
-      "units": 4,
-      "views": 1388,
-      "carts": 7,
-      "cart_rate": 0.5,
-      "conversion": 0.29
-    },
-    {
-      "offer_id": "Fancl women 50+",
-      "brand": "FANCL",
-      "revenue": 11017.728,
+      "revenue": 11792.187,
       "units": 3,
-      "views": 974,
-      "carts": 14,
-      "cart_rate": 1.4,
-      "conversion": 0.31
+      "views": 585,
+      "carts": 7,
+      "cart_rate": 1.2,
+      "conversion": 0.51
+    },
+    {
+      "offer_id": "FANCL-Women-60-Plus-90",
+      "brand": "FANCL",
+      "revenue": 11116.4171,
+      "units": 1,
+      "views": 262,
+      "carts": 0,
+      "cart_rate": 0.0,
+      "conversion": 0.38
     },
     {
       "offer_id": "FANCL-Women-50-Plus-90",
       "brand": "FANCL",
-      "revenue": 10326.9614,
+      "revenue": 10102.762,
       "units": 1,
-      "views": 670,
+      "views": 407,
       "carts": 3,
-      "cart_rate": 0.4,
-      "conversion": 0.15
-    },
-    {
-      "offer_id": "Fancl Men 40++",
-      "brand": "FANCL",
-      "revenue": 10326.9612,
-      "units": 3,
-      "views": 542,
-      "carts": 5,
-      "cart_rate": 0.9,
-      "conversion": 0.55
-    },
-    {
-      "offer_id": "Fancl Men 50+",
-      "brand": "FANCL",
-      "revenue": 10305.087,
-      "units": 3,
-      "views": 995,
-      "carts": 6,
-      "cart_rate": 0.6,
-      "conversion": 0.3
-    },
-    {
-      "offer_id": "Centrum Sliver men 275",
-      "brand": "CENTRUM",
-      "revenue": 10085.193,
-      "units": 3,
-      "views": 148,
-      "carts": 4,
-      "cart_rate": 2.7,
-      "conversion": 2.03
-    },
-    {
-      "offer_id": "FANCL-Men-40-Plus-90",
-      "brand": "FANCL",
-      "revenue": 9636.1947,
-      "units": 1,
-      "views": 258,
-      "carts": 3,
-      "cart_rate": 1.2,
-      "conversion": 0.39
+      "cart_rate": 0.7,
+      "conversion": 0.25
     },
     {
       "offer_id": "FANCL-Women-40-Plus-90",
       "brand": "FANCL",
-      "revenue": 9636.1947,
+      "revenue": 9426.992,
       "units": 1,
-      "views": 336,
+      "views": 316,
       "carts": 3,
       "cart_rate": 0.9,
-      "conversion": 0.3
+      "conversion": 0.32
     },
     {
-      "offer_id": "Fancl women 40+",
+      "offer_id": "Fancl Men 50+",
       "brand": "FANCL",
-      "revenue": 6746.4876,
+      "revenue": 7185.688,
       "units": 2,
-      "views": 3815,
-      "carts": 7,
-      "cart_rate": 0.2,
-      "conversion": 0.05
+      "views": 696,
+      "carts": 4,
+      "cart_rate": 0.6,
+      "conversion": 0.29
+    },
+    {
+      "offer_id": "Fancl Men 40++",
+      "brand": "FANCL",
+      "revenue": 6735.1746,
+      "units": 2,
+      "views": 503,
+      "carts": 2,
+      "cart_rate": 0.4,
+      "conversion": 0.4
     },
     {
       "offer_id": "Fancl Fat Diet 90",
       "brand": "FANCL",
-      "revenue": 6562.283,
+      "revenue": 6419.8152,
       "units": 2,
-      "views": 1230,
-      "carts": 11,
-      "cart_rate": 0.9,
+      "views": 1241,
+      "carts": 9,
+      "cart_rate": 0.7,
       "conversion": 0.16
-    },
-    {
-      "offer_id": "FANCL-Women-30-Plus-90",
-      "brand": "FANCL",
-      "revenue": 6527.7448,
-      "units": 1,
-      "views": 241,
-      "carts": 3,
-      "cart_rate": 1.2,
-      "conversion": 0.41
-    },
-    {
-      "offer_id": "Centrum Sliver men 100",
-      "brand": "CENTRUM",
-      "revenue": 5986.644,
-      "units": 4,
-      "views": 1589,
-      "carts": 8,
-      "cart_rate": 0.5,
-      "conversion": 0.25
-    },
-    {
-      "offer_id": "Fancl women 30+",
-      "brand": "FANCL",
-      "revenue": 4766.2898,
-      "units": 2,
-      "views": 1294,
-      "carts": 11,
-      "cart_rate": 0.9,
-      "conversion": 0.15
-    },
-    {
-      "offer_id": "Perfect-astaxanthincollagenpowder-378g",
-      "brand": "Asahi",
-      "revenue": 4133.0871,
-      "units": 1,
-      "views": 322,
-      "carts": 2,
-      "cart_rate": 0.6,
-      "conversion": 0.31
-    },
-    {
-      "offer_id": "Centrum Sliver Women 275",
-      "brand": "CENTRUM",
-      "revenue": 3361.731,
-      "units": 1,
-      "views": 591,
-      "carts": 5,
-      "cart_rate": 0.8,
-      "conversion": 0.17
-    },
-    {
-      "offer_id": "Centrum Men 200",
-      "brand": "CENTRUM",
-      "revenue": 3016.3477,
-      "units": 1,
-      "views": 363,
-      "carts": 4,
-      "cart_rate": 1.1,
-      "conversion": 0.28
-    },
-    {
-      "offer_id": "LACTOFIT-Pink-60",
-      "brand": "Lacto-fit",
-      "revenue": 2279.5299,
-      "units": 1,
-      "views": 1128,
-      "carts": 2,
-      "cart_rate": 0.2,
-      "conversion": 0.09
     },
     {
       "offer_id": "FANCL-enkin-30capsules",
       "brand": "FANCL",
-      "revenue": 2175.9149,
+      "revenue": 4257.3512,
+      "units": 2,
+      "views": 2561,
+      "carts": 23,
+      "cart_rate": 0.9,
+      "conversion": 0.08
+    },
+    {
+      "offer_id": "Fancl women 50+",
+      "brand": "FANCL",
+      "revenue": 3592.844,
       "units": 1,
-      "views": 2996,
-      "carts": 22,
+      "views": 877,
+      "carts": 5,
+      "cart_rate": 0.6,
+      "conversion": 0.11
+    },
+    {
+      "offer_id": "FANCL-kuaichangsapote-60capsules",
+      "brand": "FANCL",
+      "revenue": 2466.5606,
+      "units": 1,
+      "views": 487,
+      "carts": 2,
+      "cart_rate": 0.4,
+      "conversion": 0.21
+    },
+    {
+      "offer_id": "Fancl women 30+",
+      "brand": "FANCL",
+      "revenue": 2331.4066,
+      "units": 1,
+      "views": 1140,
+      "carts": 8,
       "cart_rate": 0.7,
-      "conversion": 0.03
+      "conversion": 0.09
+    },
+    {
+      "offer_id": "LACTOFIT-Pink-60",
+      "brand": "Lacto-fit",
+      "revenue": 2230.0411,
+      "units": 1,
+      "views": 949,
+      "carts": 6,
+      "cart_rate": 0.6,
+      "conversion": 0.11
+    },
+    {
+      "offer_id": "LACTOFIT-Blue-60",
+      "brand": "Lacto-fit",
+      "revenue": 2016.0472,
+      "units": 1,
+      "views": 176,
+      "carts": 2,
+      "cart_rate": 1.1,
+      "conversion": 0.57
+    },
+    {
+      "offer_id": "LACTOFIT-Green-60",
+      "brand": "Lacto-fit",
+      "revenue": 2016.0472,
+      "units": 1,
+      "views": 985,
+      "carts": 4,
+      "cart_rate": 0.4,
+      "conversion": 0.1
+    },
+    {
+      "offer_id": "EARTH JELLY-cherry-31",
+      "brand": "Earth",
+      "revenue": 1903.4189,
+      "units": 1,
+      "views": 546,
+      "carts": 7,
+      "cart_rate": 1.3,
+      "conversion": 0.18
+    },
+    {
+      "offer_id": "EARTH JELLY-grape-15",
+      "brand": "Earth",
+      "revenue": 1903.4189,
+      "units": 1,
+      "views": 309,
+      "carts": 1,
+      "cart_rate": 0.3,
+      "conversion": 0.32
+    },
+    {
+      "offer_id": "EARTH JELLY-pineapple-15",
+      "brand": "Earth",
+      "revenue": 1903.4189,
+      "units": 1,
+      "views": 99,
+      "carts": 2,
+      "cart_rate": 2.0,
+      "conversion": 1.01
+    },
+    {
+      "offer_id": "Fancl Women 20+",
+      "brand": "FANCL",
+      "revenue": 1633.1109,
+      "units": 1,
+      "views": 684,
+      "carts": 5,
+      "cart_rate": 0.7,
+      "conversion": 0.15
+    },
+    {
+      "offer_id": "DHC-IRON-20",
+      "brand": "DHC",
+      "revenue": 1554.271,
+      "units": 2,
+      "views": 482,
+      "carts": 6,
+      "cart_rate": 1.2,
+      "conversion": 0.41
     }
   ],
   "brand_trend": {
@@ -646,8 +646,8 @@
       },
       {
         "month": "7月",
-        "revenue": 747321.5,
-        "units": 218
+        "revenue": 839046.02,
+        "units": 241
       }
     ],
     "CENTRUM": [
@@ -683,8 +683,8 @@
       },
       {
         "month": "7月",
-        "revenue": 137974.1,
-        "units": 57
+        "revenue": 140902.44,
+        "units": 59
       }
     ],
     "Lacto-fit": [
@@ -720,8 +720,8 @@
       },
       {
         "month": "7月",
-        "revenue": 38745.77,
-        "units": 19
+        "revenue": 46472.07,
+        "units": 23
       }
     ],
     "Earth": [
@@ -742,8 +742,8 @@
       },
       {
         "month": "7月",
-        "revenue": 25807.63,
-        "units": 14
+        "revenue": 31517.89,
+        "units": 17
       }
     ],
     "Asahi": [
@@ -774,8 +774,8 @@
       },
       {
         "month": "7月",
-        "revenue": 18802.61,
-        "units": 6
+        "revenue": 19917.63,
+        "units": 7
       }
     ]
   }
